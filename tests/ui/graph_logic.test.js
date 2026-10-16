@@ -58,3 +58,27 @@ test("conversations and themes are listed for the scope pickers", () => {
   assert.deepEqual(G.conversations(map).map((c) => [c.conversation_id, c.count]), [["a", 2], ["b", 2]]);
   assert.deepEqual(G.themes(map).map((t) => t.id), ["t1"]);
 });
+
+test("display filters hide conversations or unconfirmed items without leaving dangling edges", () => {
+  const g = G.buildGraph(map, { kind: "all" });
+  const ids = (x) => x.nodes.map((n) => n.id).sort();
+  const noConv = G.filterGraph(g, { conversations: false });
+  assert.ok(noConv.nodes.every((n) => n.type === "node") && noConv.edges.every((e) => e.type === "relation"));
+  assert.equal(G.filterGraph(g, {}).nodes.length, g.nodes.length);
+  const sure = G.filterGraph(g, { onlyConfirmed: true });
+  assert.deepEqual(ids(sure).filter((id) => !id.startsWith("conv:")), []);
+  const ok = { nodes: [{ id: "a", type: "node", status: "confirmed" }, { id: "b", type: "node", status: "candidate" }], edges: [{ id: "e", source: "a", target: "b", type: "relation", status: "confirmed" }] };
+  const only = G.filterGraph(ok, { onlyConfirmed: true });
+  assert.deepEqual(only.nodes.map((n) => n.id), ["a"]);
+  assert.deepEqual(only.edges, []);
+});
+
+test("degrees count relations only and a neighbourhood is the node, its neighbours and their edges", () => {
+  const g = G.buildGraph(map, { kind: "all" });
+  const d = G.degrees(g);
+  assert.equal(d.get("t1"), 2);
+  assert.equal(d.get("g1"), 2);
+  const n = G.neighbourhood(g, "g1");
+  assert.ok(n.nodes.has("g1") && n.nodes.has("t1") && n.nodes.has("x1"));
+  assert.ok(n.edges.has("e1") && n.edges.has("e3") && !n.edges.has("e2"));
+});

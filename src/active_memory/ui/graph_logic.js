@@ -78,7 +78,38 @@
     return { nodes: nodes.concat([...convs.values()]), edges: relations.concat(origins), truncated, total, shown: nodes.length };
   }
 
-  const api = { MAX_NODES, buildGraph, conversations, themes };
+  // Display filters on an already built graph: hide the conversation nodes, or keep only confirmed items.
+  // Edges whose end disappeared go too, so nothing dangles.
+  function filterGraph(graph, options) {
+    const opts = options || {};
+    const nodes = graph.nodes.filter((n) => (n.type === "conversation" ? opts.conversations !== false : !opts.onlyConfirmed || n.status === "confirmed"));
+    const ids = new Set(nodes.map((n) => n.id));
+    const edges = graph.edges.filter((e) => ids.has(e.source) && ids.has(e.target) && (!opts.onlyConfirmed || e.type === "origin" || e.status === "confirmed"));
+    return Object.assign({}, graph, { nodes, edges });
+  }
+
+  // How many relations (not origin links) touch each node; bigger = more central. Used for sizing.
+  function degrees(graph) {
+    const count = new Map(graph.nodes.map((n) => [n.id, 0]));
+    for (const e of graph.edges) {
+      if (e.type !== "relation") continue;
+      count.set(e.source, (count.get(e.source) || 0) + 1);
+      count.set(e.target, (count.get(e.target) || 0) + 1);
+    }
+    return count;
+  }
+
+  // The node, its direct neighbours and the edges between them: what stays bright while one node is in focus.
+  function neighbourhood(graph, id) {
+    const nodes = new Set([id]);
+    const edges = new Set();
+    for (const e of graph.edges) {
+      if (e.source === id || e.target === id) { nodes.add(e.source); nodes.add(e.target); edges.add(e.id); }
+    }
+    return { nodes, edges };
+  }
+
+  const api = { MAX_NODES, buildGraph, conversations, themes, filterGraph, degrees, neighbourhood };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AMGraph = api;
 })(typeof window !== "undefined" ? window : globalThis);

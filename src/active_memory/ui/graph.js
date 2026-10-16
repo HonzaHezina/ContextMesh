@@ -10,7 +10,7 @@
   const G = window.AMGraph;
   const S = window.AMShell;
   const $ = (id) => document.getElementById(id);
-  const state = { map: null, scope: null, graph: null, cy: null, g3: null, mode: "3d", selected: null };
+  const state = { map: null, scope: null, graph: null, cy: null, g3: null, mode: "3d", selected: null, filters: { conversations: true, onlyConfirmed: false } };
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -35,11 +35,12 @@
     const fg = css("--fg"), card = css("--card"), line = css("--line"), accent = css("--accent");
     const cand = css("--cand"), ok = css("--ok"), muted = css("--muted"), accentBg = css("--accent-bg");
     return [
-      { selector: "node", style: { label: "data(label)", "font-size": 13, color: fg, "text-wrap": "wrap", "text-max-width": 130, "text-valign": "bottom", "text-margin-y": 5, "background-color": card, "border-width": 2, "border-color": line, width: 34, height: 34, shape: "data(shape)", "text-background-color": card, "text-background-opacity": 0.85, "text-background-padding": 2 } },
+      { selector: "node", style: { label: "data(label)", "font-size": 13, color: fg, "text-wrap": "wrap", "text-max-width": 130, "text-valign": "bottom", "text-margin-y": 5, "background-color": card, "border-width": 2, "border-color": line, width: "data(size)", height: "data(size)", shape: "data(shape)", "text-background-color": card, "text-background-opacity": 0.85, "text-background-padding": 2 } },
       { selector: 'node[status = "candidate"]', style: { "border-color": cand, "border-style": "dashed" } },
       { selector: 'node[status = "confirmed"]', style: { "border-color": ok, "border-style": "solid" } },
-      { selector: 'node[type = "conversation"]', style: { "background-color": accentBg, "border-color": accent, "border-style": "solid", width: 36, height: 28 } },
-      { selector: 'node[kind = "Theme"]', style: { width: 42, height: 42, "font-weight": "bold" } },
+      { selector: 'node[type = "conversation"]', style: { "background-color": accentBg, "border-color": accent, "border-style": "solid", width: 38, height: 30 } },
+      { selector: 'node[kind = "Theme"]', style: { "font-weight": "bold" } },
+      { selector: ".dim", style: { opacity: 0.15, "text-opacity": 0.3 } },
       { selector: "edge", style: { width: 2, "line-color": line, "target-arrow-color": line, "target-arrow-shape": "triangle", "curve-style": "bezier", "font-size": 11, color: muted, "text-background-color": card, "text-background-opacity": 0.9, "text-background-padding": 2 } },
       { selector: 'edge[type = "relation"][status = "candidate"]', style: { "line-style": "dashed", "line-color": cand, "target-arrow-color": cand } },
       { selector: 'edge[type = "relation"][status = "confirmed"]', style: { "line-style": "solid", "line-color": ok, "target-arrow-color": ok } },
@@ -50,7 +51,9 @@
   }
 
   function elements(graph) {
-    const nodes = graph.nodes.map((n) => ({ data: { id: n.id, label: n.label, type: n.type, kind: n.kind, status: n.status, shape: SHAPE[n.kind] || "ellipse" } }));
+    const degree = G.degrees(graph);
+    const size = (n) => (n.type === "conversation" ? 34 : (n.kind === "Theme" ? 40 : 30) + 5 * Math.min(degree.get(n.id) || 0, 6));
+    const nodes = graph.nodes.map((n) => ({ data: { id: n.id, label: n.label, type: n.type, kind: n.kind, status: n.status, size: size(n), shape: SHAPE[n.kind] || "ellipse" } }));
     const edges = graph.edges.map((e) => ({ data: { id: e.id, source: e.source, target: e.target, type: e.type, relation: e.relation, status: e.status, text: relationText(e.relation) } }));
     return nodes.concat(edges);
   }
@@ -111,13 +114,24 @@
     if (state.g3) { window.AMGraph3D.destroy(state.g3); state.g3 = null; }
   }
 
+  // Flat version of "keep the node and its neighbours bright, dim the rest".
+  function emphasize(id) {
+    if (!state.cy) return;
+    state.cy.elements().removeClass("dim");
+    const node = id ? state.cy.getElementById(id) : null;
+    if (!node || !node.isNode || !node.isNode() || node.empty()) return;
+    state.cy.elements().not(node.closedNeighborhood()).addClass("dim");
+  }
+
   const NOTHING_SELECTED = "Klikněte na uzel nebo vazbu.";
 
   function draw() {
     const box = $("graph-canvas");
     clearDrawing();
-    state.graph = G.buildGraph(state.map, state.scope);
-    const g = state.graph;
+    state.selected = null;
+    const built = G.buildGraph(state.map, state.scope);
+    state.graph = G.filterGraph(built, state.filters);
+    const g = Object.assign({}, state.graph, { shown: built.shown, truncated: built.truncated, total: built.total });
     const want3d = state.mode === "3d" && window.AMGraph3D && window.AMGraph3D.available();
     $("graph-info").textContent = !g.nodes.length ? "V tomto výběru není nic k zobrazení."
       : "Zobrazeno uzlů: " + g.shown + (g.truncated ? " z " + g.total + " (zobrazeno jen " + G.MAX_NODES + " nejsilnějších – zúžte výběr)" : "") + ", vazeb: " + g.edges.filter((e) => e.type === "relation").length + "."
@@ -147,8 +161,10 @@
       container: box, elements: elements(g), style: stylesheet(), minZoom: 0.3, maxZoom: 2.5, wheelSensitivity: 0.3,
       layout: { name: "cose", animate: false, nodeRepulsion: 40000, idealEdgeLength: 140, nodeOverlap: 30, padding: 40, randomize: true, componentSpacing: 120, numIter: 1500 },
     });
-    state.cy.on("tap", "node, edge", (event) => showDetail(event.target.id()));
-    state.cy.on("tap", (event) => { if (event.target === state.cy) $("graph-detail").replaceChildren(el("p", { class: "empty" }, NOTHING_SELECTED)); });
+    state.cy.on("mouseover", "node", (event) => emphasize(event.target.id()));
+    state.cy.on("mouseout", "node", () => emphasize(state.selected));
+    state.cy.on("tap", "node, edge", (event) => { showDetail(event.target.id()); emphasize(event.target.id()); });
+    state.cy.on("tap", (event) => { if (event.target === state.cy) { state.selected = null; emphasize(null); $("graph-detail").replaceChildren(el("p", { class: "empty" }, NOTHING_SELECTED)); } });
   }
 
   function renderOverview() {
@@ -220,4 +236,10 @@
   for (const button of document.querySelectorAll("[data-graph-mode]")) {
     button.addEventListener("click", () => { state.mode = button.dataset.graphMode; if (state.map) draw(); });
   }
+  $("graph-fit").addEventListener("click", () => {
+    if (state.g3) window.AMGraph3D.fit(state.g3);
+    if (state.cy) { state.selected = null; emphasize(null); state.cy.animate({ fit: { padding: 40 } }, { duration: 300 }); }
+  });
+  $("graph-show-conv").addEventListener("change", (e) => { state.filters.conversations = e.target.checked; if (state.map) draw(); });
+  $("graph-only-ok").addEventListener("change", (e) => { state.filters.onlyConfirmed = e.target.checked; if (state.map) draw(); });
 })();

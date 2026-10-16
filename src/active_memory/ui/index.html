@@ -79,13 +79,16 @@
     <h2 id="graph-h">Graf</h2>
     <p class="lead">Obrázek jedné konverzace nebo jednoho tématu: co z ní vzniklo a jak to spolu souvisí. Čárkovaně je to, co čeká na schválení; plně to, co je potvrzeno.</p>
     <div class="filters"><label>Zobrazit <select id="graph-scope"></select></label>
-      <span class="modes" role="group" aria-label="Způsob zobrazení"><button type="button" data-graph-mode="3d" aria-pressed="true">3D</button><button type="button" data-graph-mode="2d" aria-pressed="false">Plošně</button></span></div>
+      <span class="modes" role="group" aria-label="Způsob zobrazení"><button type="button" data-graph-mode="3d" aria-pressed="true">3D</button><button type="button" data-graph-mode="2d" aria-pressed="false">Plošně</button></span>
+      <button type="button" id="graph-fit">Vystředit</button>
+      <label><input type="checkbox" id="graph-show-conv" checked> Konverzace</label>
+      <label><input type="checkbox" id="graph-only-ok"> Jen potvrzené</label></div>
     <p id="graph-info" class="meta"></p>
     <div class="split graph-split">
       <div id="graph-canvas" role="img" aria-label="Graf souvislostí; textový přehled je pod ním"></div>
       <aside id="graph-detail" aria-live="polite"></aside>
     </div>
-    <p id="graph-3d-hint" class="legend-line meta">3D: tažením otáčíte, kolečkem přibližujete, pravým tlačítkem posouváte, kliknutí na kouli ji přiblíží a ukáže detail. Žlutě je návrh, zeleně potvrzeno, modře konverzace.</p>
+    <p id="graph-3d-hint" class="legend-line meta">3D: tažením otáčíte, kolečkem přibližujete, pravým tlačítkem posouváte, kliknutí na kouli ji přiblíží a ukáže detail, najetí myší zvýrazní její sousedy, přetažená koule zůstane na místě. Tlačítko Vystředit vrátí celý obraz do zorného pole. Žlutě je návrh, zeleně potvrzeno, modře konverzace.</p>
     <p class="legend-line meta">Tvary (v plošném zobrazení): šestiúhelník = téma, kosočtverec = cíl, elipsa = myšlenka, obdélník = rozhodnutí, sud = konverzace. Tečkovaná čára = „vzniklo z konverzace“.</p>
     <details class="tech" open><summary>Textový přehled</summary><ul id="graph-overview" class="plain"></ul></details>
   </section>
