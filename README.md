@@ -4,7 +4,7 @@ Osobní paměť nezávislá na konkrétním chatbotu nebo agentovi. Uchovává z
 staví mapu témat a myšlenek napříč konverzacemi a vrací vybraný kontext ostatním systémům.
 janAGI je jeden z klientů. Není potřeba k instalaci, provozu ani správě paměti.
 
-Repo: [HonzaHezina/ActiveMemory](https://github.com/HonzaHezina/ActiveMemory).
+Repo: [HonzaHezina/ContextMesh](https://github.com/HonzaHezina/ContextMesh) (název produktu a Python balíčku zůstává Active Memory).
 
 **Začni souborem [START_HERE.md](START_HERE.md).** Zadání prvního vývojového běhu je
 v [docs/AGENT_START_PROMPT.md](docs/AGENT_START_PROMPT.md).
@@ -29,8 +29,13 @@ vazby ABOUT/SUPPORTS/REFINES/CONTRADICTS/SUPERSEDES, vyhledávání a sestavení
 s citacemi a limitem znaků. Uchovává explicitní časovou platnost `[valid_from, valid_to)`.
 Obsahuje živé smazání zdroje, export, audit operací, Docker/Coolify konfigurace a CI.
 Verzovaný log událostí ([EVENTS.md](docs/EVENTS.md)) a jednostránkové webové UI na `/ui`: konverzace jako chat, fronta kandidátů
-ke schválení, graf, témata, časová osa, nastavení modelu (Gemini, Mistral, OpenAI, Ollama) a volitelné rady modelu (jen doporučení, rozhoduje člověk).
-Konverzace se dostanou dovnitř vložením textu v UI, MCP nástrojem `memory_save_conversation`, REST API nebo skripty v `scripts/`.
+ke schválení, graf (3D výchozí, plošný jako záložní), témata, časová osa, nastavení modelu (Gemini, Mistral, OpenAI, Ollama) a volitelné rady modelu (jen doporučení, rozhoduje člověk).
+Konverzace se dostanou dovnitř:
+- importem exportu ChatGPT (`scripts/import_chatgpt_export.py`) a sessions Claude Code (`scripts/import_claude_code.py`),
+- vložením textu v UI (rozdělení podle značek mluvčích, u textu bez značek ruční určení po odstavcích),
+- MCP nástrojem `memory_save_conversation` (lokální stdio), REST API nebo normalizovaným JSONL (`scripts/import_jsonl.py`).
+
+Export webu Claude, Gemini, Mistral a Copilot Chat zatím chybí, viz [INTEGRATIONS](docs/INTEGRATIONS.md) a [BACKLOG](docs/BACKLOG.md).
 Návrhy vazeb mezi myšlenkami z různých chatů (vždy `candidate` se zdroji) a webový prohlížeč mapy na `/ui`
 (témata, zdroje s citací, schvalování) viz [STATUS](docs/STATUS.md) a [EVALUATION](docs/EVALUATION.md).
 
@@ -95,6 +100,14 @@ Zapnutí automatické extrakce: `MEMORY_EXTRACTION_MODE=llm`, `MEMORY_ALLOW_MODE
 a konfigurace modelu. Zapnutí Graphiti navíc: `MEMORY_GRAPHITI_ENABLED=true`, embedder a instalace
 `uv sync --frozen --extra graphiti --extra dev`. Docker image Graphiti dependency již obsahuje.
 
+## Nasazení na server (Hetzner / Coolify)
+
+Hotový `compose.coolify.yaml` (API + Neo4j). V Coolify nastav povinně `MEMORY_API_KEY` (min. 24 náhodných znaků, je to zároveň token pro přihlášení do UI)
+a `MEMORY_NEO4J_PASSWORD`, doménu přiřaď jen službě `memory` na portu 8080. UI je na `/ui`, kontrola na `/readyz`. První nasazení proběhlo
+2026-10-19; postup, poznatky a chyby jsou v [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Model calls jsou ve výchozím stavu vypnuté: zprávy se uloží
+jako zdroje, ale uzly a návrhy do grafu vzniknou až po zapnutí extrakce. Data ze svého počítače nahraješ skripty v `scripts/`
+(`MEMORY_API_URL`, `MEMORY_CLIENT_API_KEY`). Než zapneš veřejný provoz, nastav limity na proxy; aplikační limity a IAM jsou v backlogu.
+
 ## Dokumentace
 
 | Soubor | Obsah |
@@ -109,6 +122,9 @@ a konfigurace modelu. Zapnutí Graphiti navíc: `MEMORY_GRAPHITI_ENABLED=true`, 
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | klíče, záloha, obnova, smazání, chyby |
 | [docs/BACKLOG.md](docs/BACKLOG.md) | pořadí implementace a podmínky přijetí |
 | [docs/STATUS.md](docs/STATUS.md) | ověřené vlastnosti a přesné mezery |
+| [docs/VALIDATION.md](docs/VALIDATION.md) | provedené kontroly a jejich výsledky |
+| [docs/EVENTS.md](docs/EVENTS.md) | kontrakt událostí v1 a audit |
+| [docs/EVALUATION.md](docs/EVALUATION.md) | český eval dataset a baseline |
 
 Repo nyní zveřejňuje jen kód a syntetické příklady, nikoli osobní paměť.
 Licence vlastního produktu zatím není deklarována; licence třetích komponent zůstávají jejich vlastní. Zdrojové podklady:
