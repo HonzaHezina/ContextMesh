@@ -109,10 +109,11 @@ Compose a Graphiti stack testy; chování událostí s Graphiti rebuildem při m
 |---|---|
 | ruff lint + format | prošly |
 | pytest (bez Neo4j) | 126 passed, 5 skipped (Neo4j/Graphiti opt-in) |
-| Node testy `tests/ui/*.test.js` | 32 passed |
+| Node testy `tests/ui/*.test.js` | 38 passed (2026-10-19, po změnách vkládání konverzace); pytest a ruff se po těchto změnách nespouštěly (v prostředí chyběl modul `neo4j`) |
 | Headless Chrome (puppeteer-core) proti reálnému serveru s **falešným** poskytovatelem: nastavení a předvolby (Gemini, Mistral), rady a filtr, uložení a smazání klíče, klíč se nikdy nezobrazí, vložení konverzace (rozdělení, změna mluvčího, odmítnutí hesla, opakování = 0 nových), filtr časové osy, zvýraznění menu | prošlo; konzole bez chyb (jen očekávané 422 při odmítnutém „heslu“) |
 | MCP `memory_save_conversation`: skutečný stdio klient proti lokální instanci, dvakrát stejná konverzace | uloženo, podruhé 0 nových |
 | `scripts/import_chatgpt_export.py` | jen 2 testy na syntetickém souboru |
+| `scripts/import_claude_code.py --dry-run` na skutečných sessions tohoto stroje | 5 sessions, 217 zpráv k nahrání, ~1 560 položek (tool calls apod.) přeskočeno; role, časy a názvy konverzací zkontrolovány ručně; nahrání na server a testy skriptu chybí |
 
 **Neověřeno:** skutečné volání Gemini a Mistralu (přijetí schématu `json_schema`, záložní JSON režim, kvalita češtiny a rad, rozměr Mistral embed 1024,
 název Gemini embeddingu), formát skutečného exportu ChatGPT, MCP s reálnou chatovací aplikací, vzdálený MCP, Firefox/Safari, čtečka obrazovky,

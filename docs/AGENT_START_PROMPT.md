@@ -4,6 +4,9 @@
 > rady modelu, vložení konverzace a MCP `memory_save_conversation`). Skutečný stav a mezery jsou v `docs/STATUS.md`, další práce v `docs/BACKLOG.md`
 > (AM-021 zbytek, AM-022 profily poskytovatelů a limity nákladů, AM-023/AM-025 konektory a vzdálené MCP, AM-019 zbytek). Neověřené zůstává:
 > skutečné volání Gemini/Mistral a kvalita češtiny, Graphiti s modelem, Coolify nasazení. Pravidla jsou v `AGENTS.md`.
+> **Aktualizace 2026-10-19:** proběhl první Coolify deploy na Hetzner (poznatky v `docs/DEPLOYMENT.md`), přibyl import sessions Claude Code
+> (`scripts/import_claude_code.py`) a ruční rozdělení vloženého textu bez značek. Otevřené: nasazená instance má jen zdroje bez extrakce (model vypnutý),
+> ověření API názvů Mistral modelů, export webu Claude, doladění vkládání (např. odstranění šumu z kopírovaného chatu), commit těchto změn není pushnutý.
 > Text níže je původní zadání prvního běhu.
 
 Pracuješ v novém samostatném repozitáři Active Memory. Načti AGENTS.md, README.md,

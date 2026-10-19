@@ -34,7 +34,7 @@ Každý úkol je samostatný commit/PR s behavior testem. Nejdřív osobní pam�
 | AM-022 | více profilů poskytovatelů a přiřazení úloh (extrakce, posuzování vazeb, embeddingy) ke konkrétnímu poskytovateli, limity nákladů a počtu volání, šifrované uložení klíčů, ověření strukturovaného výstupu Gemini/Mistral |
 | AM-024 | podobné uzly: návrhy ALIAS_OF a jejich potvrzení do skupin (`clusters`) už existují (AM-003) a záměrně nic nesloučí. Zbývá jen rozhodnout, zda je skutečné slučování uzlů vůbec potřeba (je nevratné a hůř se mazá se zdrojem). Podnět z externí revize |
 | AM-025 | **část hotová: nástroj `memory_save_conversation` (stdio) – asistent uloží konverzaci na požádání.** Zbývá vzdálený MCP přes HTTPS pro webové chaty a případně návrhy paměti od asistenta. Původní popis: obousměrný MCP: asistent v živém chatu sám navrhne zápis do paměti; vždy jen jako návrh ke schválení člověkem, s tokenem klienta s právem zápisu, bez kopie obsahu zprávy v události. Navazuje na AM-023. Podnět z externí revize |
-| AM-023 | konektory z chatovacích aplikací (import exportů – **hotov skript pro export ChatGPT (terminál), stránka Vložit konverzaci a MCP nástroj `memory_save_conversation`**, zbývá Claude, Gemini, Mistral, MCP, n8n), přepočet už zpracovaných zpráv po změně modelu |
+| AM-023 | konektory z chatovacích aplikací (import exportů – **hotov skript pro export ChatGPT (terminál), stránka Vložit konverzaci (i ruční rozdělení po odstavcích), skript `import_claude_code.py` pro sessions Claude Code a MCP nástroj `memory_save_conversation`**, zbývá export webu Claude (formát neviděn), skript pro Copilot Chat (VS Code `workspaceStorage`, formát se mění), Gemini, Mistral, MCP, n8n), přepočet už zpracovaných zpráv po změně modelu |
 
 ## Měřitelné scénáře
 

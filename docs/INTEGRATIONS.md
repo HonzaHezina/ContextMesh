@@ -55,11 +55,21 @@ Cesty, jak konverzaci dostat dovnitř (od nejpřesnější):
 
 1. **Oficiální export** – zatím jen ChatGPT: `scripts/import_chatgpt_export.py conversations.json [--dry-run]`
    (aktuální větev konverzace, původní časy, ID zpráv z exportu). Ověřeno na syntetickém souboru, ne na skutečném exportu.
-2. **Vložení textu** v UI (Konverzace → Vložit konverzaci): rozdělení podle značek mluvčích, ruční oprava, datum zadá člověk.
-3. **MCP `memory_save_conversation`**: asistent na požádání uloží aktuální konverzaci. Je to přepis modelu, ne export aplikace,
+2. **Sessions Claude Code** (CLI i rozšíření ve VS Code): `scripts/import_claude_code.py --list` / `--project NAZEV [--dry-run]`.
+   Čte soubory `~/.claude/projects/<kódovaná-cesta>/<session>.jsonl` (Windows `%USERPROFILE%\.claude\projects`). Bere jen text uživatele
+   a asistenta s původními časy; tool calls, výsledky nástrojů, thinking, přílohy a vedlejší vlákna přeskočí, `<system-reminder>` z promptů odstraní.
+   Bez `--project`/`--all` nic neimportuje (v adresáři jsou i nesouvisející projekty). ID zpráv jsou uuid ze souboru, opakování nic nezdvojí.
+   Claude Code staré sessions maže (`cleanupPeriodDays`, výchozí asi 30 dní): nastav vysoké číslo a importuj včas.
+   Ověřeno suchým během na skutečných souborech; nahrání na server nezkoušeno. Soubory mohou obsahovat tajemství z výstupů příkazů.
+3. **Vložení textu** v UI (Konverzace → Vložit konverzaci): rozdělení podle značek mluvčích (`Vy:`, `ChatGPT:`, `**Claude:**`…; u výpisu z terminálu
+   Claude Code `> ` = uživatel a `● ` = asistent, jen když se objeví obě). Text bez značek se rozdělí na odstavce a člověk klikáním určí, kde začíná
+   nová zpráva a kdo mluví (výchozí: první odstavec uživatel, druhý asistent, zbytek pokračuje). Po úspěšném odeslání se formulář vyprázdní.
+   Text z chatu ve VS Code ani z webu Claude žádné značky nemá: automatické rozdělení by jen hádalo, proto ruční určení. Datum zadá člověk.
+4. **MCP `memory_save_conversation`**: asistent na požádání uloží aktuální konverzaci. Je to přepis modelu, ne export aplikace,
    proto je v názvu konverzace „přepsal asistent“. Jen lokální stdio; vzdálený MCP pro webové chaty není (AM-025).
 
-Na import Claude/Gemini/Mistral exportů připrav samostatné adaptery podle jejich skutečného aktuálního formátu; ten jsme neviděli.
+Oficiální exporty ChatGPT i webu Claude (Nastavení → Soukromí/Data → Export) jsou vždy celé od začátku účtu, bez výběru období; opakovaný import
+je bezpečný. Na import exportu Claude (web), Gemini a Mistral připrav samostatné adaptery podle jejich skutečného aktuálního formátu; ten jsme neviděli.
 Účty se nepřipojují a chaty se nescrapují. Všechny cesty vytvářejí jen zdroje a kandidáty, nic nepotvrzují.
 File/import adapter musí zachovat čas, roli, externí IDs, attachments odkazy a permissions.
 Přílohy nemají být nepozorovaně odkazovány na expirované dočasné URL.

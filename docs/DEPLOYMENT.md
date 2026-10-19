@@ -22,6 +22,16 @@ Po úspěšném vytvoření GitHub repa:
 7. Pro připojené asistenty vytvoř read/write klíče, ne sdílený owner token. V Coolify default fallback
    používá jeden owner token; pro další klíče nastav trvalý mount clients.json a jeho cestu.
 
+Zkušenosti z prvního nasazení (2026-10-19):
+- `memory` padá s `ValueError: configure clients.json or a MEMORY_API_KEY of at least 24 characters`, když je `MEMORY_API_KEY` v Coolify prázdný,
+  kratší než 24 znaků nebo se nedostal do kontejneru za běhu (zkontroluj, že není jen build proměnná, a že hodnota nemá mezeru ani uvozovky).
+- Neo4j warningy `UnknownPropertyKeyWarning` (`scope`, `payload`, `am`) v logu `memory` u prázdné databáze jsou normální; po prvním zápisu zmizí.
+- Na `/` aplikace nic nemá (`{"detail":"Not Found"}`); UI je na `/ui`, kontrola na `/readyz` a `/healthz`. Přihlášení: token = hodnota `MEMORY_API_KEY`.
+- Data ze svého počítače nahraješ skripty v `scripts/` s `MEMORY_API_URL=https://<doména>` a `MEMORY_CLIENT_API_KEY=<token>` (viz INTEGRATIONS.md).
+  Změny UI se na serveru projeví až po commitu, pushi a redeployi v Coolify.
+- Při `MEMORY_EXTRACTION_MODE=provided` se zprávy ukládají jako zdroje, ale uzly a návrhy z nich nevzniknou; k tomu je potřeba zapnout model.
+- Testovací data: `examples/conversations.jsonl` přes `scripts/import_jsonl.py` (označena `synthetic-demo`); na ostrý server raději jen skutečná data.
+
 Coolify služby sdílejí svoji Compose síť; není vyžadována externí síť jménem `coolify` ani janAGI.
 Pokud použiješ odlišné routování/proxy labels ve své instalaci, přidej je lokálně podle ní.
 Reverzní proxy má limitovat request body, request rate a timeout; před veřejným provozem dodělat
@@ -37,6 +47,11 @@ aplikační limity a IAM z backlogu. API payload limit je 50 000 znaků content,
 | MEMORY_GRAPHITI_ENABLED=true | user source → Graphiti temporal fact graph |
 | MEMORY_MODEL_BASE_URL / API_KEY / NAME | inference i reranking |
 | MEMORY_EMBEDDING_BASE_URL / API_KEY / MODEL / DIM | samostatný embedding provider |
+
+Předvolby v UI (`PRESETS` v `settings.py`) byly 2026-10-19 porovnány s dokumentací. Gemini: adresa a modely (`gemini-3.5-flash-lite`, `gemini-3.8-flash`,
+`gemini-embedding-001`) odpovídají; dokumentace nově uvádí i `gemini-4-argon` a `gemini-embedding-2-preview` (rozměr neuveden). Mistral: adresa a podpora
+`json_schema` odpovídají, ale dokumentace u aktuálních modelů (Small 4 v26.03, Medium 3.5 v26.04, Large 4 v26.10, Mistral Embed v23.12) neuvádí přesné API názvy
+ani rozměr embeddingu; `mistral-small-2603`, `mistral-medium-3-5` a `mistral-embed-2312` jsou odvozené a **neověřené**. Ověř je výpisem `GET /v1/models` se svým klíčem.
 
 Local nebo hosted OpenAI-compatible endpoint lze nakonfigurovat. Graphiti adapter používá
 OpenAIGenericClient, nikoli endpoint-specifický OpenAI Responses klient.
