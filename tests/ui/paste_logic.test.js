@@ -20,6 +20,30 @@ test("no markers: one user message and not marked; text before the first marker 
   assert.deepEqual(I.parsePaste("   ").messages, []);
 });
 
+test("Claude Code terminal copy: '> ' is the user, '● ' the assistant; a lone quote is not a speaker", () => {
+  const r = I.parsePaste("> kde se ukládají konverzace?\n\n● Obojí leží v profilu.\n  Další řádek.\n\n> díky\n● Rádo se stalo");
+  assert.deepEqual(r.messages.map((m) => m.role), ["user", "assistant", "user", "assistant"]);
+  assert.equal(r.messages[0].content, "kde se ukládají konverzace?");
+  assert.equal(r.messages[1].content, "Obojí leží v profilu.\n  Další řádek.");
+  const quote = I.parsePaste("> jen citace\nběžný text");
+  assert.deepEqual([quote.marked, quote.messages.length], [false, 1]);
+});
+
+test("text without markers: paragraphs assigned by hand are merged into messages", () => {
+  const blocks = I.splitBlocks("otázka\n\nodpověď 1\n\nodpověď 2\r\n \r\nvaše druhá\n\ndalší odpověď");
+  assert.equal(blocks.length, 5);
+  const marks = I.defaultMarks(blocks.length);
+  assert.deepEqual(marks, ["user", "assistant", "", "", ""]);
+  let m = I.fromBlocks(blocks, marks);
+  assert.deepEqual(m.map((x) => x.role), ["user", "assistant"]);
+  assert.equal(m[1].content, "odpověď 1\n\nodpověď 2\n\nvaše druhá\n\ndalší odpověď");
+  marks[3] = "user"; marks[4] = "assistant";
+  m = I.fromBlocks(blocks, marks);
+  assert.deepEqual(m.map((x) => x.role), ["user", "assistant", "user", "assistant"]);
+  assert.equal(m[2].content, "vaše druhá");
+  assert.equal(I.fromBlocks(["a", "b"], ["", ""])[0].role, "user");
+});
+
 test("a normal sentence is not taken for a marker; CRLF is handled", () => {
   const r = I.parsePaste("Vy: použij model tak, aby ty: nebyl značkou\r\nAI: ano");
   assert.deepEqual(r.messages.map((m) => m.role), ["user", "assistant"]);

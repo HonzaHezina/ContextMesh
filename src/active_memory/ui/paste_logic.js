@@ -13,14 +13,23 @@
   // Split pasted text into messages by speaker markers. Without any marker the whole text is one
   // user message (`marked` is false so the page can warn). Text before the first marker is not
   // guessed into a message; its length is reported instead.
+  // Claude Code terminal copy: "> " starts a user message, "● " an assistant one. Used only when
+  // both appear, so an ordinary markdown quote is not taken for a speaker.
+  const CC_USER = /^>\s?(.*)$/;
+  const CC_BOT = /^●\s?(.*)$/;
+
   function parsePaste(text) {
     const messages = [];
     let current = null, preamble = 0;
-    for (const line of String(text).replace(/\r\n?/g, "\n").split("\n")) {
+    const lines = String(text).replace(/\r\n?/g, "\n").split("\n");
+    const claudeCode = lines.some((l) => CC_USER.test(l)) && lines.some((l) => CC_BOT.test(l));
+    for (const line of lines) {
       let role = null, rest = line;
       let m = USER.exec(line);
       if (m) { role = "user"; rest = m[1]; }
       else if ((m = BOT.exec(line))) { role = "assistant"; rest = m[1]; }
+      else if (claudeCode && (m = CC_USER.exec(line))) { role = "user"; rest = m[1]; }
+      else if (claudeCode && (m = CC_BOT.exec(line))) { role = "assistant"; rest = m[1]; }
       if (role) { current = { role, lines: [rest] }; messages.push(current); }
       else if (current) current.lines.push(line);
       else preamble += line.trim().length;
@@ -31,6 +40,23 @@
       return { messages: whole ? [{ role: "user", content: whole }] : [], marked: false, preamble: 0 };
     }
     return { messages: out, marked: true, preamble };
+  }
+
+  // Text without speaker markers: paragraphs (separated by blank lines) that the person assigns by
+  // hand. `marks[i]` is "user" or "assistant" where a new message starts, "" for a continuation.
+  function splitBlocks(text) {
+    return String(text).replace(/\r\n?/g, "\n").split(/\n[ \t]*\n/).map((s) => s.trim()).filter(Boolean);
+  }
+  function defaultMarks(count) {
+    return Array.from({ length: count }, (_, i) => (i === 0 ? "user" : i === 1 ? "assistant" : ""));
+  }
+  function fromBlocks(blocks, marks) {
+    const out = [];
+    blocks.forEach((content, i) => {
+      if (marks[i] || !out.length) out.push({ role: marks[i] || "user", content });
+      else out[out.length - 1].content += "\n\n" + content;
+    });
+    return out;
   }
 
   // 53-bit string hash (cyrb53); stable across runs so a repeated paste is recognised, not a security hash.
@@ -58,7 +84,7 @@
     }));
   }
 
-  const api = { LIMIT, parsePaste, pasteBodies, hash };
+  const api = { LIMIT, parsePaste, splitBlocks, defaultMarks, fromBlocks, pasteBodies, hash };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AMPaste = api;
 })(typeof window !== "undefined" ? window : globalThis);
