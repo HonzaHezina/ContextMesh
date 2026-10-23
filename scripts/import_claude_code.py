@@ -42,14 +42,25 @@ def text_of(content):
     if isinstance(content, str):
         return clean(content)
     if isinstance(content, list):
-        return clean("\n".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text"))
+        return clean(
+            "\n".join(
+                b.get("text", "")
+                for b in content
+                if isinstance(b, dict) and b.get("type") == "text"
+            )
+        )
     return ""
 
 
 def stamp(value):
     if not value:
         return None
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        .astimezone(timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def project_name(folder):
@@ -59,7 +70,10 @@ def project_name(folder):
 
 def convert_session(path, project):
     """(message bodies, skipped counts) of one session file."""
-    bodies, skipped = [], {"tool_or_other": 0, "empty_or_harness": 0, "too_long": 0, "sidechain_meta_error": 0}
+    bodies, skipped = (
+        [],
+        {"tool_or_other": 0, "empty_or_harness": 0, "too_long": 0, "sidechain_meta_error": 0},
+    )
     session = path.stem
     first = None
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -104,9 +118,18 @@ def sessions(selected, everything):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--list", action="store_true", help="list projects and session counts, then stop")
-    ap.add_argument("--project", action="append", default=[], help="part of the project folder name (repeatable)")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--list", action="store_true", help="list projects and session counts, then stop"
+    )
+    ap.add_argument(
+        "--project",
+        action="append",
+        default=[],
+        help="part of the project folder name (repeatable)",
+    )
     ap.add_argument("--all", action="store_true", help="every project (including unrelated ones)")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -139,7 +162,9 @@ def main():
         sys.exit("Set MEMORY_CLIENT_API_KEY to a token with write permission.")
     base = os.environ.get("MEMORY_API_URL", "http://127.0.0.1:8080")
     new, rejected = 0, []
-    with httpx.Client(base_url=base, headers={"Authorization": f"Bearer {key}"}, timeout=30) as http:
+    with httpx.Client(
+        base_url=base, headers={"Authorization": f"Bearer {key}"}, timeout=30
+    ) as http:
         for body in bodies:
             response = http.post("/v1/episodes", json=body)
             if response.status_code in (409, 422):
