@@ -16,6 +16,8 @@ context = await memory.context("Jaký je můj záměr s vlastnictvím dat?")
 await memory.close()
 ```
 
+Hotovou konverzaci lze v UI (Konverzace) znovu projít modelem (`/reprocess`) nebo smazat; viz [API](API.md).
+
 Importer musí používat stable externí ID. Na retry neposílej náhodné ID, jinak vyrobíš duplikáty.
 Autor konverzace a role musí být pravdivé; assistant odpověď není user preference.
 
@@ -65,11 +67,17 @@ Cesty, jak konverzaci dostat dovnitř (od nejpřesnější):
    Claude Code `> ` = uživatel a `● ` = asistent, jen když se objeví obě). Text bez značek se rozdělí na odstavce a člověk klikáním určí, kde začíná
    nová zpráva a kdo mluví (výchozí: první odstavec uživatel, druhý asistent, zbytek pokračuje). Po úspěšném odeslání se formulář vyprázdní.
    Text z chatu ve VS Code ani z webu Claude žádné značky nemá: automatické rozdělení by jen hádalo, proto ruční určení. Datum zadá člověk.
+   **JSON export nebo API** (stejná stránka, pole „soubor s exportem“ nebo JSON vložený do textu): formát se pozná podle struktury a odešlou se všechny konverzace
+   s původními časy a ID (opakování nic nezdvojí). Rozpoznává `conversations.json` z ChatGPT (aktuální větev) a z claude.ai (`chat_messages`, `human` → uživatel),
+   Google Takeout „My Activity“ Gemini (dvojice prompt/odpověď, odpověď je HTML převedené na text, bez ID konverzace, proto seskupeno po dnech) a pole zpráv
+   z API OpenAI, Anthropic a Gemini (`messages`/`contents`; system, tool a obrázky se vynechají). Kód je v `paste_logic.js` (`parseExport`).
+   **Tvary jsou ze znalosti struktury a ověřené jen na syntetických souborech**, ne na skutečných exportech; Mistral export neznáme.
+   Syntetické vzorky pro vyzkoušení generuje `scripts/make_test_conversations.py` do `examples/test-conversations/` (texty se značkami i JSON).
 4. **MCP `memory_save_conversation`**: asistent na požádání uloží aktuální konverzaci. Je to přepis modelu, ne export aplikace,
    proto je v názvu konverzace „přepsal asistent“. Jen lokální stdio; vzdálený MCP pro webové chaty není (AM-025).
 
 Oficiální exporty ChatGPT i webu Claude (Nastavení → Soukromí/Data → Export) jsou vždy celé od začátku účtu, bez výběru období; opakovaný import
-je bezpečný. Na import exportu Claude (web), Gemini a Mistral připrav samostatné adaptery podle jejich skutečného aktuálního formátu; ten jsme neviděli.
+je bezpečný. Export Claude (web) a Gemini se čte v UI podle předpokládaného formátu (viz výše), skutečné soubory jsme neviděli; Mistral a skriptové adaptery zůstávají v backlogu.
 Účty se nepřipojují a chaty se nescrapují. Všechny cesty vytvářejí jen zdroje a kandidáty, nic nepotvrzují.
 File/import adapter musí zachovat čas, roli, externí IDs, attachments odkazy a permissions.
 Přílohy nemají být nepozorovaně odkazovány na expirované dočasné URL.

@@ -7,6 +7,9 @@
 > **Aktualizace 2026-10-19:** proběhl první Coolify deploy na Hetzner (poznatky v `docs/DEPLOYMENT.md`), přibyl import sessions Claude Code
 > (`scripts/import_claude_code.py`) a ruční rozdělení vloženého textu bez značek. Otevřené: nasazená instance má jen zdroje bez extrakce (model vypnutý),
 > ověření API názvů Mistral modelů, export webu Claude, doladění vkládání (např. odstranění šumu z kopírovaného chatu), commit těchto změn není pushnutý.
+> **Aktualizace 2026-10-23:** vložení/nahrání JSON exportu v UI (ChatGPT, claude.ai, Google Takeout Gemini, pole zpráv z API; `paste_logic.js` `parseExport`),
+> syntetické vzorky (`scripts/make_test_conversations.py`), u konverzace „Znovu projít modelem“ (`/reprocess`, přírůstkové) a „Smazat konverzaci“ (`DELETE`).
+> Otevřené: formáty exportů neověřeny na skutečných souborech, nové UI v prohlížeči nezkoušeno, `docs/openapi.json` je zastaralý (generuje se z `/openapi.json`), nic z toho není nasazeno.
 > Text níže je původní zadání prvního běhu.
 
 Pracuješ v novém samostatném repozitáři Active Memory. Načti AGENTS.md, README.md,

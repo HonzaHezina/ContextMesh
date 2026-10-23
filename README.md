@@ -32,10 +32,10 @@ Verzovaný log událostí ([EVENTS.md](docs/EVENTS.md)) a jednostránkové webov
 ke schválení, graf (3D výchozí, plošný jako záložní), témata, časová osa, nastavení modelu (Gemini, Mistral, OpenAI, Ollama) a volitelné rady modelu (jen doporučení, rozhoduje člověk).
 Konverzace se dostanou dovnitř:
 - importem exportu ChatGPT (`scripts/import_chatgpt_export.py`) a sessions Claude Code (`scripts/import_claude_code.py`),
-- vložením textu v UI (rozdělení podle značek mluvčích, u textu bez značek ruční určení po odstavcích),
+- vložením textu v UI (rozdělení podle značek mluvčích, u textu bez značek ruční určení po odstavcích) nebo nahráním JSON exportu (ChatGPT, claude.ai, Google Takeout Gemini, pole zpráv z API OpenAI/Anthropic/Gemini; formáty zatím jen na syntetických vzorcích),
 - MCP nástrojem `memory_save_conversation` (lokální stdio), REST API nebo normalizovaným JSONL (`scripts/import_jsonl.py`).
 
-Export webu Claude, Gemini, Mistral a Copilot Chat zatím chybí, viz [INTEGRATIONS](docs/INTEGRATIONS.md) a [BACKLOG](docs/BACKLOG.md).
+V UI lze konverzaci znovu projít modelem (jen přírůstkově) nebo smazat. Skriptový export Mistral a Copilot Chat zatím chybí, viz [INTEGRATIONS](docs/INTEGRATIONS.md) a [BACKLOG](docs/BACKLOG.md).
 Návrhy vazeb mezi myšlenkami z různých chatů (vždy `candidate` se zdroji) a webový prohlížeč mapy na `/ui`
 (témata, zdroje s citací, schvalování) viz [STATUS](docs/STATUS.md) a [EVALUATION](docs/EVALUATION.md).
 

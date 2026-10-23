@@ -77,7 +77,7 @@ přežije rebuild, žádný text smazaného zdroje v odvozeném grafu) nebyly do
 | Kontrola | Výsledek |
 |---|---|
 | pytest celé sady proti lokálnímu Neo4j (`MEMORY_TEST_NEO4J`, `MEMORY_TEST_STACK_URI`) | 50 passed, 2 skipped (Graphiti live) |
-| ruff lint + format | prošly |
+| ruff lint + format | lint prošel; format kromě dřívějšího `scripts/import_claude_code.py` (2026-10-23) |
 | Live Neo4j: uložení a načtení návrhových hran včetně `rejected` | prošlo (`test_native_neo4j_persists_proposals_and_tombstones`) |
 | UI e2e v jsdom proti reálnému API se seedem z eval datasetu: připojení, 19 témat, kandidát označen, detail, zdroj se zvýrazněnou citací, potvrzení uzlu, fronta návrhů (2), žádný script/img z dat, 0 JS chyb | prošlo (jednorázově, skript není v repu) |
 | Wheel obsahuje `ui/*` | ověřeno `uv build --wheel`; Docker image s UI neověřen (CI) |
@@ -108,8 +108,8 @@ Compose a Graphiti stack testy; chování událostí s Graphiti rebuildem při m
 | Kontrola | Výsledek |
 |---|---|
 | ruff lint + format | prošly |
-| pytest (bez Neo4j) | 126 passed, 5 skipped (Neo4j/Graphiti opt-in) |
-| Node testy `tests/ui/*.test.js` | 38 passed (2026-10-19, po změnách vkládání konverzace); pytest a ruff se po těchto změnách nespouštěly (v prostředí chyběl modul `neo4j`) |
+| pytest (bez Neo4j) | 128 passed, 7 skipped (2026-10-23, po přidání reprocess/smazání konverzace); dříve 126 passed, 5 skipped |
+| Node testy `tests/ui/*.test.js` | 45 passed (2026-10-23, včetně importu JSON exportů na syntetických vzorcích z `examples/test-conversations/`) |
 | Headless Chrome (puppeteer-core) proti reálnému serveru s **falešným** poskytovatelem: nastavení a předvolby (Gemini, Mistral), rady a filtr, uložení a smazání klíče, klíč se nikdy nezobrazí, vložení konverzace (rozdělení, změna mluvčího, odmítnutí hesla, opakování = 0 nových), filtr časové osy, zvýraznění menu | prošlo; konzole bez chyb (jen očekávané 422 při odmítnutém „heslu“) |
 | MCP `memory_save_conversation`: skutečný stdio klient proti lokální instanci, dvakrát stejná konverzace | uloženo, podruhé 0 nových |
 | `scripts/import_chatgpt_export.py` | jen 2 testy na syntetickém souboru |

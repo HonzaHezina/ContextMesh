@@ -51,6 +51,10 @@ A new UI file must be added in three places: the `ui_files` map in `api.py`, the
 `api.py` changes need a server restart; static files do not. Pure logic goes in `*_logic.js` with a Node test in `tests/ui/`.
 Check UI changes in a real browser (headless Chrome with puppeteer-core), not only jsdom: it found CSP and rendering bugs jsdom did not.
 
+Conversation view actions (`conv.js`): destructive ones (delete) need two clicks; "reprocess" is additive and never changes existing candidates or their status.
+JSON export parsing (`parseExport` in `paste_logic.js`) follows the known shape of ChatGPT / claude.ai / Google Takeout / chat-API files; it is verified on synthetic files only
+(`scripts/make_test_conversations.py`). Change it only from a real (anonymised) sample and add that shape as a fixture; do not claim a vendor format as supported before that.
+
 ## Change boundaries
 
 Keep provider code in `providers.py`, graph persistence in `graph.py`, evidence/jobs in `journal.py`,

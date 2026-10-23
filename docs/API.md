@@ -9,6 +9,8 @@ Scope určuje server, request žádný scope/group/tenant nepřijímá.
 | GET `/ui` (též `/ui/review`) | žádné (statický shell bez dat) | jedna stránka s menu: Konverzace (výchozí), Ke schválení, Graf, Témata, Návrhy vazeb, Časová osa; token se zadává jednou a drží jen v paměti záložky (přepínání pohledů ho neztratí, obnovení stránky ano); přísné CSP |
 | GET `/v1/conversations` | read | živé konverzace (nejnovější první), kurzor, počty návrhů podle stavu |
 | GET `/v1/conversations/{source_system}/{conversation_id}` | read | zprávy jedné konverzace a co z každé vzniklo (`derived`: návrh, stav, citace); smazaný zdroj zmizí |
+| POST `/v1/conversations/{source_system}/{conversation_id}/reprocess` | admin | pošle zprávy uživatele (bez vlastní dodané extrakce) modelu znovu; přírůstkové, stávající kandidáti a jejich stavy se nemění; 202 `{queued, user_messages}`; 409 bez nastaveného modelu nebo s Graphiti projekcí |
+| DELETE `/v1/conversations/{source_system}/{conversation_id}` | admin | smaže všechny zprávy konverzace jako `DELETE /v1/episodes/{id}` po jedné (odvozené položky stojící jen na nich zmizí); není atomické, při 503 zopakovat |
 | GET `/healthz` | žádné | proces žije |
 | GET `/readyz` | žádné | journal a graph backend dostupné; neověřuje dostupnost modelu |
 | POST `/v1/episodes` | write | queued ingest, 202, episode_id + duplicate |
