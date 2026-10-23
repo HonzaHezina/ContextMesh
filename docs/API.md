@@ -17,7 +17,7 @@ Scope určuje server, request žádný scope/group/tenant nepřijímá.
 | GET `/v1/episodes/{id}` | read | přesná původní zpráva |
 | POST `/v1/search` | read | active items; volitelně Graphiti inferred facts |
 | POST `/v1/context` | read | vybraný reviewed kontext s citacemi |
-| GET `/v1/map?limit=500` | read | uzly, vazby a `clusters` (skupiny uzlů spojené potvrzeným ALIAS_OF); počet a truncated flag |
+| GET `/v1/map?limit=500` | read | uzly, vazby a `clusters` (skupiny uzlů spojené potvrzeným ALIAS_OF); počet a truncated flag; `conversation_titles` (klíč `zdroj/id` → odvozený název) |
 | GET `/v1/whoami` | libovolný platný token | `client_id` a `permissions` presentovaného tokenu (UI podle toho nabízí akce; server vynucuje vždy) |
 | GET `/v1/events` | read | verzovaný veřejný log událostí, filtry, kurzor; viz [EVENTS.md](EVENTS.md) |
 | GET `/v1/candidates` | read | stránkovaná fronta kandidátů (uzly/vazby) s evidencemi, původem příspěvků a stavem auditu |

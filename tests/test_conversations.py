@@ -144,3 +144,9 @@ def test_conversation_title_comes_from_themes_else_from_the_first_message(client
     assert titles["chat-b"] == "Jak poznám, kdy nechat rozhodnutí na systému?"
     assert titles["chat-c"].endswith("…") and len(titles["chat-c"]) <= 71
     assert client.get("/v1/conversations/demo/chat-a").json()["title"] == "Vlastnictví dat"
+
+
+def test_map_carries_readable_conversation_titles(client):
+    put(client, "1", "chat-a")
+    titles = client.get("/v1/map").json()["conversation_titles"]
+    assert titles == {"demo/chat-a": "Vlastnictví dat"}

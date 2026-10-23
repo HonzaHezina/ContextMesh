@@ -7,16 +7,19 @@
   const convKey = (e) => e.source_system + "/" + e.conversation_id;
   const strength = (n) => (n.strength || 0) * 10 + (n.activity || 0);
 
+  // Readable conversation name from the server (`conversation_titles`), else the technical id.
+  const convName = (map, e) => ((map && map.conversation_titles) || {})[convKey(e)] || e.conversation_id;
+
   function conversations(map) {
     const seen = new Map();
     for (const node of map.nodes.filter((n) => n.status !== "rejected")) {
       for (const e of node.evidence || []) {
         const key = convKey(e);
-        if (!seen.has(key)) seen.set(key, { key, source_system: e.source_system, conversation_id: e.conversation_id, nodes: new Set() });
+        if (!seen.has(key)) seen.set(key, { key, source_system: e.source_system, conversation_id: e.conversation_id, title: convName(map, e), nodes: new Set() });
         seen.get(key).nodes.add(node.id);
       }
     }
-    return [...seen.values()].map((c) => ({ key: c.key, source_system: c.source_system, conversation_id: c.conversation_id, count: c.nodes.size }))
+    return [...seen.values()].map((c) => ({ key: c.key, source_system: c.source_system, conversation_id: c.conversation_id, title: c.title, count: c.nodes.size }))
       .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
   }
 
@@ -71,7 +74,7 @@
       const keys = new Set((n.evidence || []).map(convKey));
       for (const key of keys) {
         const sample = n.evidence.find((e) => convKey(e) === key);
-        if (!convs.has(key)) convs.set(key, { id: "conv:" + key, label: sample.conversation_id, type: "conversation", kind: "Conversation", status: "confirmed", source_system: sample.source_system, conversation_id: sample.conversation_id });
+        if (!convs.has(key)) convs.set(key, { id: "conv:" + key, label: convName(map, sample), type: "conversation", kind: "Conversation", status: "confirmed", source_system: sample.source_system, conversation_id: sample.conversation_id, title: convName(map, sample) });
         origins.push({ id: "from:" + key + ">" + n.id, source: "conv:" + key, target: n.id, relation: "FROM", status: "confirmed", type: "origin" });
       }
     }

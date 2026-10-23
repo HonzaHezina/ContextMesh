@@ -66,7 +66,7 @@
   // -- detail ------------------------------------------------------------------------------
   function evidenceBlock(e) {
     return el("blockquote", { class: "quote" }, el("q", {}, e.quote),
-      el("footer", { class: "meta" }, (R.ROLE[e.role] || e.role || "role neznámá") + " · " + R.when(e.occurred_at) + " · konverzace „" + e.conversation_id + "“ ",
+      el("footer", { class: "meta" }, (R.ROLE[e.role] || e.role || "role neznámá") + " · " + R.when(e.occurred_at) + " · konverzace „" + ((state.map && state.map.conversation_titles || {})[e.source_system + "/" + e.conversation_id] || e.conversation_id) + "“ ",
         el("button", { type: "button", class: "link", onclick: () => S.show("conversations", { source_system: e.source_system, conversation_id: e.conversation_id, highlight: e.episode_id }) }, "otevřít konverzaci")));
   }
 
@@ -79,7 +79,7 @@
     const node = state.graph.nodes.find((n) => n.id === id);
     const edge = state.graph.edges.find((e) => e.id === id);
     if (node && node.type === "conversation") {
-      setPane(pane, el("h3", {}, "Konverzace „" + node.conversation_id + "“"), el("div", { class: "meta" }, node.source_system),
+      setPane(pane, el("h3", {}, "Konverzace „" + (node.title || node.conversation_id) + "“"), el("div", { class: "meta" }, node.source_system),
         el("p", {}, el("button", { type: "button", onclick: () => S.show("conversations", { source_system: node.source_system, conversation_id: node.conversation_id }) }, "Otevřít konverzaci")),
         el("p", {}, el("button", { type: "button", onclick: () => select({ kind: "conversation", source_system: node.source_system, conversation_id: node.conversation_id }) }, "Zobrazit graf této konverzace")));
       return;
@@ -193,7 +193,7 @@
     const picker = $("graph-scope");
     picker.replaceChildren();
     const group = (label, items) => { const g = el("optgroup", { label }); for (const [value, text] of items) g.append(el("option", { value }, text)); picker.append(g); };
-    group("Konverzace", G.conversations(state.map).map((c) => [scopeKey({ kind: "conversation", source_system: c.source_system, conversation_id: c.conversation_id }), c.conversation_id + " (" + c.count + ")"]));
+    group("Konverzace", G.conversations(state.map).map((c) => [scopeKey({ kind: "conversation", source_system: c.source_system, conversation_id: c.conversation_id }), (c.title || c.conversation_id) + " (" + c.count + ")"]));
     group("Témata", G.themes(state.map).map((t) => [scopeKey({ kind: "theme", id: t.id }), t.label]));
     group("Celá paměť", [["all", "Nejsilnější uzly (omezeno na " + G.MAX_NODES + ")"]]);
     picker.value = scopeKey(state.scope);

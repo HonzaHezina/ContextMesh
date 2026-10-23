@@ -222,8 +222,14 @@ def create_app(settings=None):
             for e in service.state["edges"].values()
             if e["source_id"] in ids and e["target_id"] in ids
         ]
+        titles = {
+            f"{c['source_system']}/{c['conversation_id']}": c["title"]
+            for c in service.conversations(None, 10**9)["conversations"]
+            if c["title"]
+        }
         return {
             "scope": settings.scope,
+            "conversation_titles": titles,
             "nodes": nodes,
             "edges": edges,
             "clusters": clusters(service.state),

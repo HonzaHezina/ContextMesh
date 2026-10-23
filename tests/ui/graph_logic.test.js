@@ -82,3 +82,14 @@ test("degrees count relations only and a neighbourhood is the node, its neighbou
   assert.ok(n.nodes.has("g1") && n.nodes.has("t1") && n.nodes.has("x1"));
   assert.ok(n.edges.has("e1") && n.edges.has("e3") && !n.edges.has("e2"));
 });
+
+test("conversation nodes and the picker use the readable title, falling back to the id", () => {
+  const titled = Object.assign({}, map, { conversation_titles: { "s/a": "Lidská kontrola" } });
+  const g = G.buildGraph(titled, { kind: "conversation", source_system: "s", conversation_id: "a" });
+  const conv = g.nodes.find((n) => n.type === "conversation");
+  assert.equal(conv.label, "Lidská kontrola");
+  assert.equal(conv.conversation_id, "a");
+  const picker = G.conversations(titled);
+  assert.equal(picker.find((c) => c.conversation_id === "a").title, "Lidská kontrola");
+  assert.equal(G.conversations(map)[0].title, G.conversations(map)[0].conversation_id);
+});
