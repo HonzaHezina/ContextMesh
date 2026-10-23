@@ -1,0 +1,11 @@
+Vy: Při automatizaci rozhodování chci zachovat lidskou kontrolu.
+
+Gemini: Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku.
+
+Vy: Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím.
+
+Gemini: To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět.
+
+Vy: Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?
+
+Gemini: Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne.

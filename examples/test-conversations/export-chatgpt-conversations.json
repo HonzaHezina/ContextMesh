@@ -1,0 +1,401 @@
+[
+  {
+    "id": "chatgpt-zahrada",
+    "conversation_id": "chatgpt-zahrada",
+    "title": "Plán zahrady",
+    "create_time": 1789201800.0,
+    "current_node": "zahrada-n4",
+    "mapping": {
+      "root": {
+        "id": "root",
+        "parent": null,
+        "message": null,
+        "children": [
+          "zahrada-n0"
+        ]
+      },
+      "zahrada-n0": {
+        "id": "zahrada-n0",
+        "parent": "root",
+        "children": [
+          "zahrada-n1"
+        ],
+        "message": {
+          "id": "zahrada-n0",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1789201800.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Chci na jaře předělat zahradu. Hlavně nechci, aby mi to zabralo každý víkend."
+            ]
+          }
+        }
+      },
+      "zahrada-n1": {
+        "id": "zahrada-n1",
+        "parent": "zahrada-n0",
+        "children": [
+          "zahrada-n2"
+        ],
+        "message": {
+          "id": "zahrada-n1",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1789201920.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Zvolte trvalky a mulčování: po prvním roce vyžadují minimum péče. Začněte jedním záhonem, ne celou zahradou."
+            ]
+          }
+        }
+      },
+      "zahrada-n2": {
+        "id": "zahrada-n2",
+        "parent": "zahrada-n1",
+        "children": [
+          "zahrada-n3"
+        ],
+        "message": {
+          "id": "zahrada-n2",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1789202040.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "A co zavlažování? Nechci ho nechat úplně na automatice, chci mít poslední slovo."
+            ]
+          }
+        }
+      },
+      "zahrada-n3": {
+        "id": "zahrada-n3",
+        "parent": "zahrada-n2",
+        "children": [
+          "zahrada-n4"
+        ],
+        "message": {
+          "id": "zahrada-n3",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1789202160.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Kapková závlaha s časovačem a ručním přepínačem je dobrý kompromis: systém zalévá, ale vy můžete kdykoli zasáhnout."
+            ]
+          }
+        }
+      },
+      "zahrada-n4": {
+        "id": "zahrada-n4",
+        "parent": "zahrada-n3",
+        "children": [],
+        "message": {
+          "id": "zahrada-n4",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1789202280.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Dobře, tak záhon u plotu a kapková závlaha s ručním přepínačem."
+            ]
+          }
+        }
+      },
+      "sys": {
+        "id": "sys",
+        "parent": "root",
+        "children": [],
+        "message": {
+          "id": "sys",
+          "author": {
+            "role": "system"
+          },
+          "create_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              ""
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "chatgpt-spanek",
+    "conversation_id": "chatgpt-spanek",
+    "title": "Spánek a práce",
+    "create_time": 1789938600.0,
+    "current_node": "spanek-n3",
+    "mapping": {
+      "root": {
+        "id": "root",
+        "parent": null,
+        "message": null,
+        "children": [
+          "spanek-n0"
+        ]
+      },
+      "spanek-n0": {
+        "id": "spanek-n0",
+        "parent": "root",
+        "children": [
+          "spanek-n1"
+        ],
+        "message": {
+          "id": "spanek-n0",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1789938600.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Poslední týdny spím špatně, protože do večera pracuji na projektu."
+            ]
+          }
+        }
+      },
+      "spanek-n1": {
+        "id": "spanek-n1",
+        "parent": "spanek-n0",
+        "children": [
+          "spanek-n2"
+        ],
+        "message": {
+          "id": "spanek-n1",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1789938720.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Zkuste pevný konec práce alespoň dvě hodiny před spaním a krátký večerní rituál bez obrazovky."
+            ]
+          }
+        }
+      },
+      "spanek-n2": {
+        "id": "spanek-n2",
+        "parent": "spanek-n1",
+        "children": [
+          "spanek-n3"
+        ],
+        "message": {
+          "id": "spanek-n2",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1789938840.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Nechci přísná pravidla, spíš jednoduchý zvyk, který udržím."
+            ]
+          }
+        }
+      },
+      "spanek-n3": {
+        "id": "spanek-n3",
+        "parent": "spanek-n2",
+        "children": [],
+        "message": {
+          "id": "spanek-n3",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1789938960.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Pak jen jedno pravidlo: v 21:00 zavřít notebook. Vše ostatní nechte volné."
+            ]
+          }
+        }
+      },
+      "sys": {
+        "id": "sys",
+        "parent": "root",
+        "children": [],
+        "message": {
+          "id": "sys",
+          "author": {
+            "role": "system"
+          },
+          "create_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              ""
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "chatgpt-automatizace",
+    "conversation_id": "chatgpt-automatizace",
+    "title": "Automatizace rozhodování",
+    "create_time": 1790935200.0,
+    "current_node": "automatizace-n5",
+    "mapping": {
+      "root": {
+        "id": "root",
+        "parent": null,
+        "message": null,
+        "children": [
+          "automatizace-n0"
+        ]
+      },
+      "automatizace-n0": {
+        "id": "automatizace-n0",
+        "parent": "root",
+        "children": [
+          "automatizace-n1"
+        ],
+        "message": {
+          "id": "automatizace-n0",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1790935200.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Při automatizaci rozhodování chci zachovat lidskou kontrolu."
+            ]
+          }
+        }
+      },
+      "automatizace-n1": {
+        "id": "automatizace-n1",
+        "parent": "automatizace-n0",
+        "children": [
+          "automatizace-n2"
+        ],
+        "message": {
+          "id": "automatizace-n1",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1790935320.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku."
+            ]
+          }
+        }
+      },
+      "automatizace-n2": {
+        "id": "automatizace-n2",
+        "parent": "automatizace-n1",
+        "children": [
+          "automatizace-n3"
+        ],
+        "message": {
+          "id": "automatizace-n2",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1790935440.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím."
+            ]
+          }
+        }
+      },
+      "automatizace-n3": {
+        "id": "automatizace-n3",
+        "parent": "automatizace-n2",
+        "children": [
+          "automatizace-n4"
+        ],
+        "message": {
+          "id": "automatizace-n3",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1790935560.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět."
+            ]
+          }
+        }
+      },
+      "automatizace-n4": {
+        "id": "automatizace-n4",
+        "parent": "automatizace-n3",
+        "children": [
+          "automatizace-n5"
+        ],
+        "message": {
+          "id": "automatizace-n4",
+          "author": {
+            "role": "user"
+          },
+          "create_time": 1790935680.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?"
+            ]
+          }
+        }
+      },
+      "automatizace-n5": {
+        "id": "automatizace-n5",
+        "parent": "automatizace-n4",
+        "children": [],
+        "message": {
+          "id": "automatizace-n5",
+          "author": {
+            "role": "assistant"
+          },
+          "create_time": 1790935800.0,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne."
+            ]
+          }
+        }
+      },
+      "sys": {
+        "id": "sys",
+        "parent": "root",
+        "children": [],
+        "message": {
+          "id": "sys",
+          "author": {
+            "role": "system"
+          },
+          "create_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              ""
+            ]
+          }
+        }
+      }
+    }
+  }
+]

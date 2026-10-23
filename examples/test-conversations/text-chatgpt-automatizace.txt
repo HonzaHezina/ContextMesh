@@ -1,0 +1,17 @@
+You said:
+Při automatizaci rozhodování chci zachovat lidskou kontrolu.
+
+ChatGPT said:
+Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku.
+
+You said:
+Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím.
+
+ChatGPT said:
+To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět.
+
+You said:
+Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?
+
+ChatGPT said:
+Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne.

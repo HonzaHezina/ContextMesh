@@ -317,6 +317,38 @@ def create_app(settings=None):
         except KeyError:
             raise HTTPException(404, "conversation not found") from None
 
+    @app.post("/v1/conversations/{source_system}/{conversation_id:path}/reprocess", status_code=202)
+    def reprocess_conversation(source_system: str, conversation_id: str, client=Depends(admin)):
+        try:
+            return service.reprocess_conversation(source_system, conversation_id, client["id"])
+        except KeyError:
+            raise HTTPException(404, "conversation not found") from None
+        except RuntimeError as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.delete("/v1/conversations/{source_system}/{conversation_id:path}")
+    async def erase_conversation(
+        source_system: str,
+        conversation_id: str,
+        client=Depends(admin),
+        correlation_id=Depends(correlation),
+    ):
+        try:
+            count = await service.erase_conversation(
+                source_system, conversation_id, client["id"], correlation_id
+            )
+        except KeyError:
+            raise HTTPException(404, "conversation not found") from None
+        except Exception:
+            raise HTTPException(
+                503, "deletion incomplete; retry before considering the conversation erased"
+            ) from None
+        return {
+            "status": "deleted_from_live_stores",
+            "messages": count,
+            "backups": "follow retention runbook",
+        }
+
     @app.get("/v1/events")
     def events(
         type: list[str] = URLQuery(default=[]),

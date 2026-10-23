@@ -1,0 +1,203 @@
+[
+  {
+    "uuid": "claude-zahrada",
+    "name": "Plán zahrady",
+    "created_at": "2026-09-12T08:30:00Z",
+    "chat_messages": [
+      {
+        "uuid": "claude-zahrada-m0",
+        "sender": "human",
+        "text": "Chci na jaře předělat zahradu. Hlavně nechci, aby mi to zabralo každý víkend.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Chci na jaře předělat zahradu. Hlavně nechci, aby mi to zabralo každý víkend."
+          }
+        ],
+        "created_at": "2026-09-12T08:30:00Z"
+      },
+      {
+        "uuid": "claude-zahrada-m1",
+        "sender": "assistant",
+        "text": "Zvolte trvalky a mulčování: po prvním roce vyžadují minimum péče. Začněte jedním záhonem, ne celou zahradou.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Zvolte trvalky a mulčování: po prvním roce vyžadují minimum péče. Začněte jedním záhonem, ne celou zahradou."
+          }
+        ],
+        "created_at": "2026-09-12T08:32:00Z"
+      },
+      {
+        "uuid": "claude-zahrada-m2",
+        "sender": "human",
+        "text": "A co zavlažování? Nechci ho nechat úplně na automatice, chci mít poslední slovo.",
+        "content": [
+          {
+            "type": "text",
+            "text": "A co zavlažování? Nechci ho nechat úplně na automatice, chci mít poslední slovo."
+          }
+        ],
+        "created_at": "2026-09-12T08:34:00Z"
+      },
+      {
+        "uuid": "claude-zahrada-m3",
+        "sender": "assistant",
+        "text": "Kapková závlaha s časovačem a ručním přepínačem je dobrý kompromis: systém zalévá, ale vy můžete kdykoli zasáhnout.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Kapková závlaha s časovačem a ručním přepínačem je dobrý kompromis: systém zalévá, ale vy můžete kdykoli zasáhnout."
+          }
+        ],
+        "created_at": "2026-09-12T08:36:00Z"
+      },
+      {
+        "uuid": "claude-zahrada-m4",
+        "sender": "human",
+        "text": "Dobře, tak záhon u plotu a kapková závlaha s ručním přepínačem.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Dobře, tak záhon u plotu a kapková závlaha s ručním přepínačem."
+          }
+        ],
+        "created_at": "2026-09-12T08:38:00Z"
+      }
+    ]
+  },
+  {
+    "uuid": "claude-spanek",
+    "name": "Spánek a práce",
+    "created_at": "2026-09-20T21:10:00Z",
+    "chat_messages": [
+      {
+        "uuid": "claude-spanek-m0",
+        "sender": "human",
+        "text": "Poslední týdny spím špatně, protože do večera pracuji na projektu.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Poslední týdny spím špatně, protože do večera pracuji na projektu."
+          }
+        ],
+        "created_at": "2026-09-20T21:10:00Z"
+      },
+      {
+        "uuid": "claude-spanek-m1",
+        "sender": "assistant",
+        "text": "Zkuste pevný konec práce alespoň dvě hodiny před spaním a krátký večerní rituál bez obrazovky.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Zkuste pevný konec práce alespoň dvě hodiny před spaním a krátký večerní rituál bez obrazovky."
+          }
+        ],
+        "created_at": "2026-09-20T21:12:00Z"
+      },
+      {
+        "uuid": "claude-spanek-m2",
+        "sender": "human",
+        "text": "Nechci přísná pravidla, spíš jednoduchý zvyk, který udržím.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Nechci přísná pravidla, spíš jednoduchý zvyk, který udržím."
+          }
+        ],
+        "created_at": "2026-09-20T21:14:00Z"
+      },
+      {
+        "uuid": "claude-spanek-m3",
+        "sender": "assistant",
+        "text": "Pak jen jedno pravidlo: v 21:00 zavřít notebook. Vše ostatní nechte volné.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Pak jen jedno pravidlo: v 21:00 zavřít notebook. Vše ostatní nechte volné."
+          }
+        ],
+        "created_at": "2026-09-20T21:16:00Z"
+      }
+    ]
+  },
+  {
+    "uuid": "claude-automatizace",
+    "name": "Automatizace rozhodování",
+    "created_at": "2026-10-02T10:00:00Z",
+    "chat_messages": [
+      {
+        "uuid": "claude-automatizace-m0",
+        "sender": "human",
+        "text": "Při automatizaci rozhodování chci zachovat lidskou kontrolu.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Při automatizaci rozhodování chci zachovat lidskou kontrolu."
+          }
+        ],
+        "created_at": "2026-10-02T10:00:00Z"
+      },
+      {
+        "uuid": "claude-automatizace-m1",
+        "sender": "assistant",
+        "text": "Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku."
+          }
+        ],
+        "created_at": "2026-10-02T10:02:00Z"
+      },
+      {
+        "uuid": "claude-automatizace-m2",
+        "sender": "human",
+        "text": "Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím."
+          }
+        ],
+        "created_at": "2026-10-02T10:04:00Z"
+      },
+      {
+        "uuid": "claude-automatizace-m3",
+        "sender": "assistant",
+        "text": "To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět.",
+        "content": [
+          {
+            "type": "text",
+            "text": "To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět."
+          }
+        ],
+        "created_at": "2026-10-02T10:06:00Z"
+      },
+      {
+        "uuid": "claude-automatizace-m4",
+        "sender": "human",
+        "text": "Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?",
+        "content": [
+          {
+            "type": "text",
+            "text": "Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?"
+          }
+        ],
+        "created_at": "2026-10-02T10:08:00Z"
+      },
+      {
+        "uuid": "claude-automatizace-m5",
+        "sender": "assistant",
+        "text": "Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne.",
+        "content": [
+          {
+            "type": "text",
+            "text": "Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne."
+          }
+        ],
+        "created_at": "2026-10-02T10:10:00Z"
+      }
+    ]
+  }
+]

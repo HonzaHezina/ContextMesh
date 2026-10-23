@@ -68,8 +68,39 @@
     $("paste-send").textContent = "Odeslat (" + state.messages.length + " zpráv)";
   }
 
+  const FORMAT = { chatgpt: "export ChatGPT", claude: "export claude.ai", gemini: "Google Takeout (Gemini)", api: "seznam zpráv z API" };
+
+  // JSON from a data export or chat API: shown as a list of conversations, sent as they are.
+  function paintExport() {
+    const ol = $("paste-list");
+    ol.replaceChildren();
+    state.exported.conversations.slice(0, 50).forEach((c) => {
+      const head = document.createElement("div");
+      head.textContent = (c.title || c.id || "Konverzace bez názvu") + " · " + c.messages.length + " zpráv";
+      const body = document.createElement("div");
+      body.className = "quote";
+      const m = c.messages[0].content;
+      body.textContent = m.length > 200 ? m.slice(0, 200) + "…" : m;
+      const li = document.createElement("li");
+      li.append(head, body);
+      ol.append(li);
+    });
+    const total = state.exported.conversations.reduce((n, c) => n + c.messages.length, 0);
+    $("paste-send").hidden = !total;
+    $("paste-send").textContent = "Odeslat (" + state.exported.conversations.length + " konverzací, " + total + " zpráv)";
+  }
+
   function parse() {
     say("");
+    state.exported = null;
+    const found = window.AMPaste.parseExport($("paste-text").value);
+    if (found) {
+      state.exported = found; state.messages = []; state.blocks = null;
+      $("paste-preview").textContent = found.conversations.length
+        ? "Rozpoznán JSON: " + FORMAT[found.format] + ", " + found.conversations.length + " konverzací. Původní časy a role se zachovají; systémové zprávy, nástroje a obrázky se vynechají." + (found.conversations.length > 50 ? " Zobrazeno prvních 50, odešlou se všechny." : "")
+        : "JSON je ve známém tvaru, ale nenašel jsem v něm žádné zprávy s textem.";
+      return paintExport();
+    }
     const r = window.AMPaste.parsePaste($("paste-text").value);
     state.messages = r.messages;
     state.blocks = null;
@@ -89,15 +120,16 @@
   }
 
   function reset() {
-    state.messages = []; state.blocks = null; $("paste-text").value = ""; $("paste-title").value = "";
+    state.messages = []; state.blocks = null; state.exported = null; $("paste-file").value = ""; $("paste-text").value = ""; $("paste-title").value = "";
     $("paste-preview").textContent = ""; $("paste-list").replaceChildren(); $("paste-send").hidden = true;
   }
 
   async function send() {
-    if (state.running || !state.messages.length) return;
+    if (state.running || !(state.exported ? state.exported.conversations.length : state.messages.length)) return;
     const day = $("paste-day").value || today();
-    const bodies = window.AMPaste.pasteBodies(state.messages, $("paste-title").value, day);
-    const skipped = state.messages.length - bodies.length;
+    const bodies = state.exported ? window.AMPaste.exportBodies(state.exported, day) : window.AMPaste.pasteBodies(state.messages, $("paste-title").value, day);
+    const count = state.exported ? state.exported.conversations.reduce((n, c) => n + c.messages.length, 0) : state.messages.length;
+    const skipped = count - bodies.length;
     state.running = true; $("paste-send").disabled = true;
     let fresh = 0; const rejected = [];
     let sent = false;
@@ -139,5 +171,13 @@
   $("open-paste").addEventListener("click", () => S.show("paste"));
   $("paste-back").addEventListener("click", () => S.show("conversations"));
   $("paste-parse").addEventListener("click", parse);
+  // A chosen file is read in the browser into the text box (nothing is sent until "Odeslat").
+  $("paste-file").addEventListener("change", async () => {
+    const file = $("paste-file").files[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) return say("Soubor je větší než 100 MB.", true);
+    $("paste-text").value = await file.text();
+    parse();
+  });
   $("paste-send").addEventListener("click", send);
 })();

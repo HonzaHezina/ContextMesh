@@ -1,0 +1,52 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Při automatizaci rozhodování chci zachovat lidskou kontrolu."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím."
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne."
+        }
+      ]
+    }
+  ]
+}

@@ -1107,6 +1107,38 @@ class MemoryService:
             "messages": messages,
         }
 
+    def _conversation_episodes(self, source_system, conversation_id):
+        ids = [
+            (episode_id, payload["role"])
+            for episode_id, payload in self.journal.live_episodes()
+            if payload["source_system"] == source_system
+            and payload["conversation_id"] == conversation_id
+        ]
+        if not ids:
+            raise KeyError(conversation_id)
+        return ids
+
+    def reprocess_conversation(self, source_system, conversation_id, actor):
+        """Run the user's messages of one conversation through the model again.
+
+        Additive: existing candidates keep their status and nothing is removed; only new items and
+        new evidence appear. Needs a configured model (otherwise there is nothing new to find).
+        """
+        episodes = self._conversation_episodes(source_system, conversation_id)
+        if self.extractor is None:
+            raise RuntimeError("model extraction is not configured")
+        if self.graphiti is not None:
+            raise RuntimeError("reprocessing is not supported with the Graphiti projection")
+        users = [episode_id for episode_id, role in episodes if role == "user"]
+        return {"queued": self.journal.requeue(users, actor), "user_messages": len(users)}
+
+    async def erase_conversation(self, source_system, conversation_id, actor, correlation_id=None):
+        """Delete every message of a conversation and what was derived only from them."""
+        episodes = self._conversation_episodes(source_system, conversation_id)
+        for episode_id, _ in episodes:
+            await self.erase(episode_id, actor, correlation_id)
+        return len(episodes)
+
     def _candidate_rows(self, kind, status, relation, exclude_relation=None):
         """Candidates in stable queue order: (first event sequence, kind, id); unaudited last."""
         rows = []

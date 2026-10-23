@@ -31,6 +31,7 @@
   }
 
   async function openConversation(source_system, conversation_id, highlight) {
+    armed = false;
     state.current = { source_system, conversation_id };
     state.highlight = highlight || null;
     state.detail = await S.call("GET", "/v1/conversations/" + encodeURIComponent(source_system) + "/" + encodeURIComponent(conversation_id));
@@ -38,6 +39,41 @@
     if (highlight) {
       const target = document.querySelector('[data-episode="' + CSS.escape(highlight) + '"]');
       if (target && target.scrollIntoView) target.scrollIntoView({ block: "center" });
+    }
+  }
+
+  const path = (c) => "/v1/conversations/" + encodeURIComponent(c.source_system) + "/" + encodeURIComponent(c.conversation_id);
+
+  // The model reads the user's messages again and may find more; nothing existing is changed.
+  async function reprocess() {
+    const c = state.detail;
+    try {
+      const r = await S.call("POST", path(c) + "/reprocess");
+      S.say(r.queued
+        ? "Zařazeno k novému projití modelem: " + r.queued + " zpráv. Nové nálezy se objeví mezi kandidáty; stávající se nemění."
+        : "Nic k novému projití: zprávy se právě zpracovávají nebo ještě nedoběhly.");
+      S.markDirty();
+    } catch (error) {
+      S.say(error.status === 409 ? "Model pro extrakci není nastaven (Nastavení) – není čím konverzaci znovu projít." : error.message, true);
+    }
+  }
+
+  // Deleting asks twice: the first click arms the button, the second one deletes.
+  let armed = false;
+  async function remove() {
+    if (!armed) { armed = true; render(); return; }
+    const c = state.detail;
+    armed = false;
+    try {
+      const r = await S.call("DELETE", path(c));
+      state.detail = null; state.current = null;
+      await loadList(false);
+      S.markDirty();
+      render();
+      S.say("Smazáno zpráv: " + r.messages + ". Odvozené návrhy, které stály jen na nich, zmizely také. Zálohy se řídí postupem uchování.");
+    } catch (error) {
+      S.say(error.message, true);
+      render();
     }
   }
 
@@ -105,6 +141,10 @@
       el("h3", { class: "chat-title" }, state.detail.conversation_id),
       el("div", { class: "meta" }, state.detail.source_system + " · zpráv: " + state.detail.messages.length + " · ",
         el("button", { type: "button", class: "link", onclick: () => S.show("graph", { scope: { kind: "conversation", source_system: state.detail.source_system, conversation_id: state.detail.conversation_id } }) }, "zobrazit jako graf")),
+      el("p", { class: "actions" },
+        el("button", { type: "button", onclick: reprocess }, "Znovu projít modelem"), " ",
+        el("button", { type: "button", class: armed ? "no" : "", onclick: remove }, armed ? "Opravdu smazat? Klikněte znovu" : "Smazat konverzaci"),
+        armed ? [" ", el("button", { type: "button", class: "link", onclick: () => { armed = false; render(); } }, "Zrušit")] : null),
       el("ol", { class: "messages chat" }, state.detail.messages.map(bubble)));
   }
 

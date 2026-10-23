@@ -1,0 +1,11 @@
+> Při automatizaci rozhodování chci zachovat lidskou kontrolu.
+
+● Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku.
+
+> Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím.
+
+● To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět.
+
+> Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?
+
+● Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne.

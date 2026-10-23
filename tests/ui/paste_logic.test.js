@@ -65,3 +65,71 @@ test("ids are stable for the same paste and differ with title, date, content or 
   assert.match(I.pasteBodies(m, "a/b\\c", "2026-10-14")[0].conversation_id, /^a b c \(/);
   assert.match(I.pasteBodies(m, "  ", "2026-10-14")[0].conversation_id, /^Vložená konverzace/);
 });
+
+const fs = require("node:fs");
+const path = require("node:path");
+const fixture = (name) => fs.readFileSync(path.join(__dirname, "../../examples/test-conversations", name), "utf-8");
+
+test("every generated plain-text fixture splits into alternating user/assistant messages", () => {
+  for (const f of fs.readdirSync(path.join(__dirname, "../../examples/test-conversations")).filter((n) => /^text-(chatgpt|claude|gemini|claude-code)-/.test(n))) {
+    const r = I.parsePaste(fixture(f));
+    assert.equal(r.marked, true, f);
+    assert.ok(r.messages.length >= 4, f);
+    assert.ok(r.messages.every((m, i) => m.role === (i % 2 ? "assistant" : "user")), f);
+  }
+});
+
+test("ChatGPT export: current branch only, system messages skipped, original times and ids kept", () => {
+  const p = I.parseExport(fixture("export-chatgpt-conversations.json"));
+  assert.equal(p.format, "chatgpt");
+  assert.equal(p.conversations.length, 3);
+  const c = p.conversations[0];
+  assert.deepEqual(c.messages.map((m) => m.role), ["user", "assistant", "user", "assistant", "user"]);
+  assert.equal(c.messages[0].at, "2026-09-12T08:30:00.000Z");
+  const bodies = I.exportBodies(p, "2026-10-23");
+  assert.equal(bodies[0].source_system, "chatgpt-export");
+  assert.equal(bodies[0].conversation_id, "chatgpt-zahrada");
+  assert.equal(bodies[0].message_id, "zahrada-n0");
+});
+
+test("claude.ai export maps human to user", () => {
+  const p = I.parseExport(fixture("export-claude-conversations.json"));
+  assert.equal(p.format, "claude");
+  assert.equal(p.conversations[2].messages[0].role, "user");
+  assert.equal(p.conversations[2].title, "Automatizace rozhodování");
+  assert.equal(I.exportBodies(p, "2026-10-23")[0].source_system, "claude-export");
+});
+
+test("Gemini Takeout activity: prompt and HTML answer, grouped by day, oldest first", () => {
+  const p = I.parseExport(fixture("export-gemini-takeout-MyActivity.json"));
+  assert.equal(p.format, "gemini");
+  assert.equal(p.conversations.length, 3);
+  const first = p.conversations[0].messages;
+  assert.equal(first[0].role, "user");
+  assert.ok(!first[0].content.startsWith("Prompted"));
+  assert.ok(!/[<>]/.test(first[1].content));
+});
+
+test("chat API message lists: system dropped, model becomes assistant, content blocks flattened", () => {
+  for (const f of ["api-openai-messages.json", "api-anthropic-messages.json", "api-gemini-contents.json"]) {
+    const p = I.parseExport(fixture(f));
+    assert.equal(p.format, "api", f);
+    assert.deepEqual(p.conversations[0].messages.map((m) => m.role), ["user", "assistant", "user", "assistant", "user", "assistant"], f);
+  }
+  const bare = I.parseExport(JSON.stringify([{ role: "user", content: "ahoj" }, { role: "assistant", content: "čau" }]));
+  assert.equal(bare.conversations[0].messages.length, 2);
+});
+
+test("not an export: ordinary text, unknown JSON and broken JSON return null", () => {
+  assert.equal(I.parseExport("Vy: ahoj"), null);
+  assert.equal(I.parseExport("{\"a\": 1}"), null);
+  assert.equal(I.parseExport("[{\"role\": \"user\""), null);
+  assert.equal(I.parseExport("[]"), null);
+});
+
+test("export ids without originals are derived, stable and overlong messages are dropped", () => {
+  const raw = JSON.stringify([{ role: "user", content: "x".repeat(I.LIMIT + 1) }, { role: "assistant", content: "ok" }]);
+  const a = I.exportBodies(I.parseExport(raw), "2026-10-23"), b = I.exportBodies(I.parseExport(raw), "2026-10-23");
+  assert.equal(a.length, 1);
+  assert.deepEqual(a, b);
+});

@@ -71,3 +71,56 @@ def put_as(client, headers):
     response = client.post("/v1/episodes", json=message("1", "chat-a"), headers=headers)
     drain(client)
     return response.json()["episode_id"]
+
+
+def test_reprocess_needs_a_model_and_requeues_only_user_messages(client):
+    # Pasted and imported messages carry no extraction of their own, so the model decides.
+    put(client, "1", "chat-a", extraction=None)
+    put(client, "2", "chat-a", "2026-10-01T10:05:00Z", role="assistant", extraction=None)
+    url = "/v1/conversations/demo/chat-a/reprocess"
+    assert client.post(url).status_code == 409  # no model configured: nothing new could be found
+
+    class Fake:
+        async def extract(self, message, themes):
+            from active_memory.models import Extraction
+
+            return Extraction.model_validate(
+                {
+                    "items": [
+                        {
+                            "kind": "Thought",
+                            "label": "Nový nález",
+                            "summary": "Model našel něco nového.",
+                            "quote": message.content[:10],
+                            "themes": ["Téma z modelu"],
+                            "confidence": 0.7,
+                        }
+                    ]
+                }
+            )
+
+    client.app.state.memory.extractor = Fake()
+    answer = client.post(url)
+    assert answer.status_code == 202 and answer.json() == {"queued": 1, "user_messages": 1}
+    drain(client)
+    detail = client.get("/v1/conversations/demo/chat-a").json()
+    assert any(i["title"] == "Nový nález" for i in detail["messages"][0]["derived"])
+    assert client.post("/v1/conversations/demo/missing/reprocess").status_code == 404
+    reader = {"Authorization": f"Bearer {READER_KEY}"}
+    assert client.post(url, headers=reader).status_code == 403
+
+
+def test_delete_conversation_removes_all_its_messages_and_derived_items(client):
+    put(client, "1", "chat-a")
+    put(client, "2", "chat-a", "2026-10-01T10:05:00Z", role="assistant", extraction={"items": []})
+    put(client, "3", "chat-b", "2026-10-02T09:00:00Z", extraction={"items": []})
+    reader = {"Authorization": f"Bearer {READER_KEY}"}
+    assert client.delete("/v1/conversations/demo/chat-a", headers=reader).status_code == 403
+    answer = client.delete("/v1/conversations/demo/chat-a")
+    assert answer.status_code == 200 and answer.json()["messages"] == 2
+    assert client.get("/v1/conversations/demo/chat-a").status_code == 404
+    assert [
+        c["conversation_id"] for c in client.get("/v1/conversations").json()["conversations"]
+    ] == ["chat-b"]
+    assert client.delete("/v1/conversations/demo/chat-a").status_code == 404
+    assert "Vlastní AI paměť" not in client.get("/v1/export").text

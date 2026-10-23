@@ -165,6 +165,21 @@ class Journal:
                 self.audit(actor, "retry", episode_id, db)
         return bool(count)
 
+    def requeue(self, episode_ids, actor):
+        """Put finished or failed jobs back in the queue so the sources are processed again."""
+        count = 0
+        with self.db() as db:
+            for episode_id in episode_ids:
+                changed = db.execute(
+                    "UPDATE jobs SET status='pending',attempts=0,available=0,error=NULL "
+                    "WHERE episode_id=? AND status IN ('done','failed')",
+                    (episode_id,),
+                ).rowcount
+                if changed:
+                    self.audit(actor, "reprocess", episode_id, db)
+                count += changed
+        return count
+
     def erase(self, episode_id, actor, event=None, purge=()):
         with self.db() as db:
             db.execute("PRAGMA secure_delete=ON")

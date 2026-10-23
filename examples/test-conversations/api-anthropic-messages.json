@@ -1,0 +1,59 @@
+{
+  "system": "Odpovídej česky.",
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Při automatizaci rozhodování chci zachovat lidskou kontrolu."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Rozlište doporučení a rozhodnutí: systém může navrhovat, ale schválení zůstává na člověku."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Stejně to chci i u rezervací v ateliéru. Automat navrhne termín, já ho potvrdím."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "To je konzistentní přístup: návrh automaticky, potvrzení ručně, s možností vrátit zpět."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "Jak poznám, kdy můžu nechat rozhodnutí úplně na systému?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Když je chyba levná a vratná, například u řazení e-mailů. U peněz a závazků ne."
+        }
+      ]
+    }
+  ]
+}

@@ -84,7 +84,134 @@
     }));
   }
 
-  const api = { LIMIT, parsePaste, splitBlocks, defaultMarks, fromBlocks, pasteBodies, hash };
+  // ---- JSON exports of chat services ---------------------------------------------------------
+  // Recognises the structure of the data exports (ChatGPT conversations.json, claude.ai
+  // conversations.json, Google Takeout Gemini "My Activity") and of the chat-API message arrays
+  // (OpenAI, Anthropic, Gemini). Shapes are taken from the documented/known structure, not from
+  // the vendors' guarantees, and are tested on synthetic files only. Returns null when the text
+  // is not JSON of a known shape, so the caller falls back to speaker-marker parsing.
+  const ROLES = { user: "user", human: "user", assistant: "assistant", model: "assistant", ai: "assistant", bot: "assistant" };
+
+  function iso(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const ms = typeof value === "number" ? (value < 1e11 ? value * 1000 : value) : Date.parse(value);
+    return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+  }
+
+  // Text of a message body: a string, or a list of parts ({type:"text",text} / {text} / strings).
+  // Non-text parts (images, tool calls, thinking) are left out.
+  function textOf(value) {
+    if (typeof value === "string") return value;
+    if (!Array.isArray(value)) return "";
+    return value.map((p) => (typeof p === "string" ? p : p && typeof p.text === "string" && (!p.type || p.type === "text") ? p.text : ""))
+      .filter(Boolean).join("\n");
+  }
+
+  const ENTITIES = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&#39;": "'", "&nbsp;": " " };
+  function htmlToText(html) {
+    return String(html).replace(/<\s*br\s*\/?>|<\/(?:p|div|li|h[1-6]|tr)>/gi, "\n").replace(/<[^>]*>/g, "")
+      .replace(/&(?:amp|lt|gt|quot|nbsp|#39);/g, (e) => ENTITIES[e]).replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  function chatgptConversation(c) {
+    const mapping = c.mapping || {};
+    const chain = [], seen = new Set();
+    let node = c.current_node;
+    while (node && mapping[node] && !seen.has(node)) { seen.add(node); chain.push(mapping[node]); node = mapping[node].parent; }
+    const messages = [];
+    for (const n of chain.reverse()) {
+      const m = n.message;
+      const role = m && m.author && ROLES[m.author.role];
+      if (!role || !m.content || (m.content.content_type !== "text" && m.content.content_type !== "multimodal_text")) continue;
+      const content = textOf(m.content.parts).trim();
+      if (content) messages.push({ id: String(m.id || n.id), role, content, at: iso(m.create_time) });
+    }
+    return { id: String(c.conversation_id || c.id || ""), title: c.title || "", at: iso(c.create_time), messages };
+  }
+
+  function claudeConversation(c) {
+    const messages = [];
+    for (const m of c.chat_messages) {
+      const role = ROLES[m.sender];
+      const content = (textOf(m.content) || (typeof m.text === "string" ? m.text : "")).trim();
+      if (role && content) messages.push({ id: String(m.uuid || ""), role, content, at: iso(m.created_at) });
+    }
+    return { id: String(c.uuid || ""), title: c.name || "", at: iso(c.created_at), messages };
+  }
+
+  // Google Takeout "My Activity" of Gemini Apps: one entry per prompt, the answer is HTML in
+  // safeHtmlItem, entries are newest first and have no conversation id, so they are grouped by day.
+  function geminiActivity(list) {
+    const days = new Map();
+    for (const e of list.slice().reverse()) {
+      const at = iso(e.time);
+      const prompt = String(e.title || "").replace(/^(?:Prompted|Zadáno|Zadali jste)\s*/i, "").trim();
+      const answer = htmlToText((e.safeHtmlItem || []).map((h) => (h && h.html) || "").join("\n"));
+      const day = (at || "").slice(0, 10) || "bez-data";
+      if (!days.has(day)) days.set(day, []);
+      const out = days.get(day), n = out.length;
+      if (prompt) out.push({ id: day + "-" + (n + 1) + "u", role: "user", content: prompt, at });
+      if (answer) out.push({ id: day + "-" + (n + 1) + "a", role: "assistant", content: answer, at });
+    }
+    return [...days].map(([day, messages]) => ({ id: "gemini-" + day, title: "Gemini " + day, at: messages[0] && messages[0].at, messages }));
+  }
+
+  // API-style message list: [{role, content}] (OpenAI, Anthropic) or [{role, parts:[{text}]}] (Gemini).
+  // System, developer and tool messages are not conversation and are left out.
+  function apiMessages(list) {
+    const messages = [];
+    for (const m of list) {
+      const role = m && ROLES[m.role];
+      const content = (typeof m.content === "string" ? m.content : textOf(m.content) || textOf(m.parts) || (typeof m.text === "string" ? m.text : "")).trim();
+      if (role && content) messages.push({ id: "", role, content, at: iso(m.created_at || m.timestamp || m.time) });
+    }
+    return messages;
+  }
+
+  function parseExport(text) {
+    const raw = String(text).trim();
+    if (!/^[\[{]/.test(raw)) return null;
+    let data;
+    try { data = JSON.parse(raw); } catch (_) { return null; }
+    const items = Array.isArray(data) ? data : [data];
+    const first = items.find((x) => x && typeof x === "object");
+    if (!first) return null;
+    let format, conversations;
+    if (first.mapping && typeof first.mapping === "object") {
+      format = "chatgpt"; conversations = items.map(chatgptConversation);
+    } else if (Array.isArray(first.chat_messages)) {
+      format = "claude"; conversations = items.filter((c) => c && Array.isArray(c.chat_messages)).map(claudeConversation);
+    } else if (items.every((e) => e && (e.header || e.products) && ("title" in e))) {
+      format = "gemini"; conversations = geminiActivity(items);
+    } else if (!Array.isArray(data) && Array.isArray(data.messages || data.contents)) {
+      format = "api"; conversations = [{ id: String(data.id || ""), title: data.title || data.name || "", at: iso(data.created_at), messages: apiMessages(data.messages || data.contents) }];
+    } else if (Array.isArray(data) && items.every((m) => m && typeof m === "object" && (m.role in ROLES || m.role === "system"))) {
+      format = "api"; conversations = [{ id: "", title: "", at: null, messages: apiMessages(items) }];
+    } else {
+      return null;
+    }
+    conversations = conversations.filter((c) => c.messages.length);
+    return { format, conversations };
+  }
+
+  const EXPORT_SOURCE = { chatgpt: "chatgpt-export", claude: "claude-export", gemini: "gemini-takeout", api: "json-paste" };
+
+  // Episode bodies for every conversation of a parsed export. Original ids and times are kept, so
+  // importing the same file again changes nothing; missing ones are derived from content and `day`.
+  function exportBodies(parsed, day) {
+    const base = Date.parse(day + "T12:00:00Z");
+    const out = [];
+    for (const c of parsed.conversations) {
+      const cid = c.id || (c.title || "Konverzace") + " (JSON " + day + ", " + hash(JSON.stringify(c.messages)).slice(0, 8) + ")";
+      c.messages.filter((m) => m.content.length <= LIMIT).forEach((m, i) => out.push({
+        source_system: EXPORT_SOURCE[parsed.format], conversation_id: cid, message_id: m.id || String(i + 1),
+        role: m.role, content: m.content, occurred_at: m.at || c.at || new Date(base + i * 60000).toISOString(),
+      }));
+    }
+    return out;
+  }
+
+  const api = { LIMIT, parsePaste, splitBlocks, defaultMarks, fromBlocks, pasteBodies, hash, parseExport, exportBodies };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AMPaste = api;
 })(typeof window !== "undefined" ? window : globalThis);
