@@ -34,7 +34,7 @@
 </nav>
 <div id="welcome" class="note welcome">
   <strong>Vítejte.</strong> Active Memory ukazuje, co si z vašich konverzací zapamatovat. Stroj navrhuje, rozhodujete vy.
-  Vložte nahoře přístupový token a klikněte na Připojit. Pak v menu otevřete <strong>Konverzace</strong> (tam je i <em>Vložit konverzaci</em>), potom <strong>Ke schválení</strong>.
+  Vložte nahoře přístupový token a klikněte na Připojit (po obnovení stránky zůstanete připojeni, po zavření záložky ne). Pak v menu otevřete <strong>Konverzace</strong> (tam je i <em>Vložit konverzaci</em>), potom <strong>Ke schválení</strong>.
   Víc v <strong>Nápovědě</strong>.
 </div>
 <div id="message" class="message" role="status" aria-live="polite"></div>
@@ -229,11 +229,12 @@
       <dt>Původ</dt><dd>Kdo návrh vyrobil: „dodaná extrakce – autor neuveden“ (přišla s daty), model (jen je-li zaznamenán), systém (z podobnosti) nebo ručně.</dd>
       <dt>Téma</dt><dd>Opakující se okruh, ke kterému návrhy patří. Jedno téma může mít zdroje z více konverzací.</dd>
       <dt>Vazba (návrh vazby)</dt><dd>Souvislost dvou návrhů: podporuje, zpřesňuje, je v rozporu, nahrazuje, je totéž. Také vzniká jen jako návrh a čeká na rozhodnutí. Potvrzení „totéž“ uzly jen seskupí, nesloučí je.</dd>
-      <dt>Kdo smí co</dt><dd>Prohlížet smí každý platný token. Potvrzovat, zamítat a měnit nastavení smí jen token s oprávněním <em>admin</em>. Vkládat konverzace smí token s oprávněním <em>write</em>. To ale neprokazuje, že rozhodl konkrétní člověk.</dd>
-      <dt>Čas zprávy</dt><dd>Pokud zpráva původní čas nemá (vložený text, přepis od asistenta), je to datum vložení a konverzace to v názvu říká.</dd>
+      <dt>Název konverzace</dt><dd>Odvozuje se sám: nejčastější témata konverzace, a dokud žádné nevzniklo, začátek její první zprávy. Po novém průchodu modelem se může změnit.</dd>
+      <dt>Kdo smí co</dt><dd>Prohlížet smí každý platný token. Potvrzovat, zamítat a měnit nastavení smí jen token s oprávněním <em>admin</em>. Vkládat konverzace smí token s oprávněním <em>write</em>. Konverzaci znovu projít modelem nebo smazat smí jen <em>admin</em>. To ale neprokazuje, že rozhodl konkrétní člověk.</dd>
+      <dt>Čas zprávy</dt><dd>Pokud zpráva původní čas nemá (vložený text, přepis od asistenta), je to datum, které jste při vložení zadali (výchozí je dnešek).</dd>
     </dl>
     <h3>Co je a není hotové</h3>
-    <p class="meta">Rozhraní slouží ke čtení, rozhodování, vkládání konverzací a nastavení modelu. Zatím chybí: úpravy návrhů, hromadné akce, automatické rady po vložení zprávy, omezení denních nákladů na modely, vzdálené MCP pro webové chaty a odběr událostí pro další aplikace. Žádné rozhodování za vás model nedělá.</p>
+    <p class="meta">Rozhraní slouží ke čtení, rozhodování, vkládání konverzací (text i JSON export), jejich opětovné projití modelem, mazání a nastavení modelu. Zatím chybí: úpravy návrhů, hromadné akce, automatické rady po vložení zprávy, omezení denních nákladů na modely, vzdálené MCP pro webové chaty a odběr událostí pro další aplikace. Žádné rozhodování za vás model nedělá.</p>
   </section>
 </main>
 <script src="/ui/shell.js"></script>

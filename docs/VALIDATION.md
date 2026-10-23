@@ -108,8 +108,8 @@ Compose a Graphiti stack testy; chování událostí s Graphiti rebuildem při m
 | Kontrola | Výsledek |
 |---|---|
 | ruff lint + format | prošly |
-| pytest (bez Neo4j) | 128 passed, 7 skipped (2026-10-23, po přidání reprocess/smazání konverzace); dříve 126 passed, 5 skipped |
-| Node testy `tests/ui/*.test.js` | 45 passed (2026-10-23, včetně importu JSON exportů na syntetických vzorcích z `examples/test-conversations/`) |
+| pytest (bez Neo4j) | 130 passed, 7 skipped (2026-10-23, po přidání reprocess, smazání, názvů konverzací a názvů v grafu); dříve 126 passed, 5 skipped |
+| Node testy `tests/ui/*.test.js` | 46 passed (2026-10-23, včetně názvů v grafu a importu JSON exportů na syntetických vzorcích z `examples/test-conversations/`) |
 | Headless Chrome (puppeteer-core) proti reálnému serveru s **falešným** poskytovatelem: nastavení a předvolby (Gemini, Mistral), rady a filtr, uložení a smazání klíče, klíč se nikdy nezobrazí, vložení konverzace (rozdělení, změna mluvčího, odmítnutí hesla, opakování = 0 nových), filtr časové osy, zvýraznění menu | prošlo; konzole bez chyb (jen očekávané 422 při odmítnutém „heslu“) |
 | MCP `memory_save_conversation`: skutečný stdio klient proti lokální instanci, dvakrát stejná konverzace | uloženo, podruhé 0 nových |
 | `scripts/import_chatgpt_export.py` | jen 2 testy na syntetickém souboru |

@@ -21,7 +21,7 @@
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
   function colors() {
-    return { fg: css("--fg"), bg: css("--card"), line: css("--line"), muted: css("--muted"), cand: css("--cand"), ok: css("--ok"), accent: css("--accent") };
+    return { fg: css("--fg"), bg: css("--card"), line: css("--muted"), muted: css("--muted"), cand: css("--cand"), ok: css("--ok"), accent: css("--accent") };
   }
 
   // "#rrggbb" or "#rgb" to rgba(); anything else is returned unchanged (then it is simply not dimmed).

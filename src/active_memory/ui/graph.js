@@ -32,16 +32,16 @@
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
   function stylesheet() {
-    const fg = css("--fg"), card = css("--card"), line = css("--line"), accent = css("--accent");
+    const fg = css("--fg"), card = css("--card"), line = css("--muted"), accent = css("--accent");
     const cand = css("--cand"), ok = css("--ok"), muted = css("--muted"), accentBg = css("--accent-bg");
     return [
-      { selector: "node", style: { label: "data(label)", "font-size": 13, color: fg, "text-wrap": "wrap", "text-max-width": 130, "text-valign": "bottom", "text-margin-y": 5, "background-color": card, "border-width": 2, "border-color": line, width: "data(size)", height: "data(size)", shape: "data(shape)", "text-background-color": card, "text-background-opacity": 0.85, "text-background-padding": 2 } },
+      { selector: "node", style: { label: "data(label)", "font-size": 12, color: fg, "text-wrap": "wrap", "text-max-width": 120, "text-valign": "bottom", "text-margin-y": 5, "background-color": card, "border-width": 2, "border-color": line, width: "data(size)", height: "data(size)", shape: "data(shape)", "text-background-color": card, "text-background-opacity": 0.9, "text-background-padding": 3, "text-background-shape": "roundrectangle" } },
       { selector: 'node[status = "candidate"]', style: { "border-color": cand, "border-style": "dashed" } },
       { selector: 'node[status = "confirmed"]', style: { "border-color": ok, "border-style": "solid" } },
       { selector: 'node[type = "conversation"]', style: { "background-color": accentBg, "border-color": accent, "border-style": "solid", width: 38, height: 30 } },
       { selector: 'node[kind = "Theme"]', style: { "font-weight": "bold" } },
       { selector: ".dim", style: { opacity: 0.15, "text-opacity": 0.3 } },
-      { selector: "edge", style: { width: 2, "line-color": line, "target-arrow-color": line, "target-arrow-shape": "triangle", "curve-style": "bezier", "font-size": 11, color: muted, "text-background-color": card, "text-background-opacity": 0.9, "text-background-padding": 2 } },
+      { selector: "edge", style: { opacity: 0.8, width: 1.8, "line-color": line, "target-arrow-color": line, "target-arrow-shape": "triangle", "curve-style": "bezier", "font-size": 11, color: muted, "text-background-color": card, "text-background-opacity": 0.9, "text-background-padding": 2 } },
       { selector: 'edge[type = "relation"][status = "candidate"]', style: { "line-style": "dashed", "line-color": cand, "target-arrow-color": cand } },
       { selector: 'edge[type = "relation"][status = "confirmed"]', style: { "line-style": "solid", "line-color": ok, "target-arrow-color": ok } },
       { selector: 'edge[relation != "ABOUT"][type = "relation"]', style: { label: "data(text)", width: 3 } },
@@ -159,7 +159,7 @@
     if (typeof window.cytoscape !== "function") return;
     state.cy = window.cytoscape({
       container: box, elements: elements(g), style: stylesheet(), minZoom: 0.3, maxZoom: 2.5, wheelSensitivity: 0.3,
-      layout: { name: "cose", animate: false, nodeRepulsion: 40000, idealEdgeLength: 140, nodeOverlap: 30, padding: 40, randomize: true, componentSpacing: 120, numIter: 1500 },
+      layout: { name: "cose", animate: false, nodeDimensionsIncludeLabels: true, nodeRepulsion: 120000, idealEdgeLength: 170, nodeOverlap: 60, padding: 50, randomize: true, componentSpacing: 180, gravity: 0.4, numIter: 2500 },
     });
     state.cy.on("mouseover", "node", (event) => emphasize(event.target.id()));
     state.cy.on("mouseout", "node", () => emphasize(state.selected));
