@@ -124,3 +124,23 @@ def test_delete_conversation_removes_all_its_messages_and_derived_items(client):
     ] == ["chat-b"]
     assert client.delete("/v1/conversations/demo/chat-a").status_code == 404
     assert "Vlastní AI paměť" not in client.get("/v1/export").text
+
+
+def test_conversation_title_comes_from_themes_else_from_the_first_message(client):
+    put(client, "1", "chat-a")  # extraction cites the theme "Vlastnictví dat"
+    put(
+        client,
+        "2",
+        "chat-b",
+        content="Jak poznám, kdy nechat rozhodnutí na systému?",
+        extraction=None,
+    )
+    put(client, "3", "chat-c", content="x " * 100, extraction={"items": []})
+    titles = {
+        c["conversation_id"]: c["title"]
+        for c in client.get("/v1/conversations").json()["conversations"]
+    }
+    assert titles["chat-a"] == "Vlastnictví dat"
+    assert titles["chat-b"] == "Jak poznám, kdy nechat rozhodnutí na systému?"
+    assert titles["chat-c"].endswith("…") and len(titles["chat-c"]) <= 71
+    assert client.get("/v1/conversations/demo/chat-a").json()["title"] == "Vlastnictví dat"

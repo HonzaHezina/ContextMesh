@@ -120,14 +120,14 @@
   }
 
   function reset() {
-    state.messages = []; state.blocks = null; state.exported = null; $("paste-file").value = ""; $("paste-text").value = ""; $("paste-title").value = "";
+    state.messages = []; state.blocks = null; state.exported = null; $("paste-file").value = ""; $("paste-text").value = "";
     $("paste-preview").textContent = ""; $("paste-list").replaceChildren(); $("paste-send").hidden = true;
   }
 
   async function send() {
     if (state.running || !(state.exported ? state.exported.conversations.length : state.messages.length)) return;
     const day = $("paste-day").value || today();
-    const bodies = state.exported ? window.AMPaste.exportBodies(state.exported, day) : window.AMPaste.pasteBodies(state.messages, $("paste-title").value, day);
+    const bodies = state.exported ? window.AMPaste.exportBodies(state.exported, day) : window.AMPaste.pasteBodies(state.messages, "", day);
     const count = state.exported ? state.exported.conversations.reduce((n, c) => n + c.messages.length, 0) : state.messages.length;
     const skipped = count - bodies.length;
     state.running = true; $("paste-send").disabled = true;

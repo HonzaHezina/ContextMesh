@@ -1026,6 +1026,15 @@ class MemoryService:
                     )
         return found
 
+    @staticmethod
+    def conversation_title(themes, first_text):
+        """Readable name: the most cited themes of the conversation, else the start of its first message."""
+        ranked = [label for label, _ in sorted(themes.items(), key=lambda t: (-t[1], t[0]))[:3]]
+        if ranked:
+            return " · ".join(ranked)
+        text = " ".join((first_text or "").split())
+        return (text[:70].rstrip() + "…" if len(text) > 70 else text) or None
+
     def conversations(self, cursor=None, limit=25):
         """Live conversations, newest activity first; keyset cursor 'last_at|source|conversation'."""
         derived = self.derived_by_source()
@@ -1033,14 +1042,28 @@ class MemoryService:
         for episode_id, payload in self.journal.live_episodes():
             key = (payload["source_system"], payload["conversation_id"])
             group = groups.setdefault(
-                key, {"messages": 0, "first_at": None, "last_at": None, "items": {}}
+                key,
+                {
+                    "messages": 0,
+                    "first_at": None,
+                    "last_at": None,
+                    "items": {},
+                    "themes": {},
+                    "first": None,
+                },
             )
+            if payload["role"] == "user" and (
+                group["first"] is None or payload["occurred_at"] < group["first"][0]
+            ):
+                group["first"] = (payload["occurred_at"], payload["content"])
             group["messages"] += 1
             stamp = payload["occurred_at"]
             group["first_at"] = min(filter(None, [group["first_at"], stamp]))
             group["last_at"] = max(filter(None, [group["last_at"], stamp]))
             for item in derived.get(episode_id, []):
                 group["items"][(item["subject"]["kind"], item["subject"]["identifier"])] = item
+                if item["candidate_kind"] == "Theme" and item["status"] != "rejected":
+                    group["themes"][item["title"]] = group["themes"].get(item["title"], 0) + 1
         rows = []
         for (source_system, conversation_id), group in groups.items():
             counts = {"candidate": 0, "confirmed": 0, "rejected": 0}
@@ -1050,6 +1073,9 @@ class MemoryService:
                 {
                     "source_system": source_system,
                     "conversation_id": conversation_id,
+                    "title": self.conversation_title(
+                        group["themes"], group["first"][1] if group["first"] else None
+                    ),
                     "messages": group["messages"],
                     "first_at": group["first_at"],
                     "last_at": group["last_at"],
@@ -1101,9 +1127,16 @@ class MemoryService:
         if not messages:
             raise KeyError(conversation_id)
         messages.sort(key=lambda m: (m["occurred_at"], m["message_id"]))
+        themes = {}
+        for m in messages:
+            for item in m["derived"]:
+                if item["candidate_kind"] == "Theme" and item["status"] != "rejected":
+                    themes[item["title"]] = themes.get(item["title"], 0) + 1
+        first = next((m["content"] for m in messages if m["role"] == "user"), None)
         return {
             "source_system": source_system,
             "conversation_id": conversation_id,
+            "title": self.conversation_title(themes, first),
             "messages": messages,
         }
 

@@ -44,9 +44,9 @@ Do not remove useful tests or weaken acceptance criteria to get a green run.
 
 ## UI rules (`src/active_memory/ui/`)
 
-Single page, vanilla JS, no build step. `shell.js` owns the token (memory only), the menu and `call()`; views register `{load, show, clear}`.
+Single page, vanilla JS, no build step. `shell.js` owns the token, the menu and `call()`; views register `{load, show, clear}`.
 CSP is `default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'`: no inline script or style, no CDN, no `eval`.
-Render all server and user text with `textContent`/`createTextNode`, never `innerHTML`; no `localStorage`/`location`. Libraries are vendored with their licence.
+Render all server and user text with `textContent`/`createTextNode`, never `innerHTML`; no `localStorage`/`location`. The token is kept in memory and in the tab's `sessionStorage` (only `shell.js`; reload keeps the connection, closing the tab forgets it). Libraries are vendored with their licence.
 A new UI file must be added in three places: the `ui_files` map in `api.py`, the file check in `.github/workflows/ci.yml`, and `tests/test_ui.py`.
 `api.py` changes need a server restart; static files do not. Pure logic goes in `*_logic.js` with a Node test in `tests/ui/`.
 Check UI changes in a real browser (headless Chrome with puppeteer-core), not only jsdom: it found CSP and rendering bugs jsdom did not.

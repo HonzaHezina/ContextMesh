@@ -73,12 +73,18 @@ def test_ui_has_no_inline_scripts_external_resources_or_html_injection_sinks():
         "eval(",
         "new Function",
         "localStorage",
-        "sessionStorage",
         "document.cookie",
         "location.",
     ):
         assert sink not in code, sink
     assert "https://" not in code and "http://" not in code
+    # The token may be kept in this tab's sessionStorage (reload keeps the connection), by the shell only.
+    others = "".join(
+        p.read_text(encoding="utf-8")
+        for p in sorted(UI.glob("*.js"))
+        if p.name not in ("cytoscape.min.js", "3d-force-graph.min.js", "shell.js")
+    )
+    assert "sessionStorage" not in others
 
 
 def test_ui_marks_candidates_and_never_auto_confirms():

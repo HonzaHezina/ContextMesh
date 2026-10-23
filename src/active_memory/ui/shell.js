@@ -1,5 +1,6 @@
-// Page shell: one document for every view, so the bearer token (kept in memory only) survives
-// switching between views. Owns connection, the menu and the shared API call. Views register
+// Page shell: one document for every view, so the bearer token survives switching between views.
+// It lives in memory and in this tab's sessionStorage (so a reload keeps the connection; closing the
+// tab forgets it; nothing survives in the browser beyond the tab). Owns connection, the menu and the shared API call. Views register
 // themselves: { load(), show(params), clear() }. All server data is rendered as text by the views.
 (function () {
   "use strict";
@@ -82,7 +83,13 @@
     } catch (error) { /* the count is a hint; the views report real errors */ }
   }
 
+  const KEY = "am-token";
+  function remember(token) {
+    try { if (token) sessionStorage.setItem(KEY, token); else sessionStorage.removeItem(KEY); } catch (_) { /* storage may be blocked */ }
+  }
+
   function disconnect() {
+    remember(null);
     session.token = null; session.canDecide = false; session.clientId = null;
     $("who").textContent = ""; $("disconnect").hidden = true; $("connect").hidden = false;
     $("review-count").textContent = ""; $("proposal-count").textContent = "";
@@ -91,23 +98,29 @@
     for (const view of Object.values(views)) view.clear();
   }
 
-  $("connect").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    session.token = $("token").value.trim(); $("token").value = "";
+  async function connectWith(token, quiet) {
+    session.token = token;
     try {
       const who = await call("GET", "/v1/whoami");
+      remember(token);
       session.clientId = who.client_id; session.canDecide = who.permissions.includes("admin");
       $("who").textContent = "Připojeno jako " + who.client_id + " · oprávnění: " + who.permissions.join(", ") +
         (session.canDecide ? "" : " · jen prohlížení");
       $("disconnect").hidden = false; $("connect").hidden = true;
       markDirty();
-      say("Připojeno.");
+      say(quiet ? "" : "Připojeno.");
       await show(session.active, { tab: session.tab });
       refreshCount();
     } catch (error) {
       if (session.token) disconnect();
-      say(error.message, true);
+      say(quiet ? "" : error.message, !quiet);
     }
+  }
+
+  $("connect").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const token = $("token").value.trim(); $("token").value = "";
+    connectWith(token, false);
   });
   $("disconnect").addEventListener("click", () => { disconnect(); say("Odpojeno, token byl zapomenut."); });
   for (const button of document.querySelectorAll("#nav button")) {
@@ -119,5 +132,10 @@
     get canDecide() { return session.canDecide; },
     get connected() { return !!session.token; },
   };
-  document.addEventListener("DOMContentLoaded", () => show("conversations"));
+  document.addEventListener("DOMContentLoaded", async () => {
+    let saved = null;
+    try { saved = sessionStorage.getItem(KEY); } catch (_) { /* storage may be blocked */ }
+    if (saved) await connectWith(saved, true);
+    else show("conversations");
+  });
 })();
