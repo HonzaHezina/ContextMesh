@@ -117,3 +117,12 @@ test("themes: themes recurring in more chats come first, rejected ones are hidde
   assert.deepEqual(L.themeRows(map, { status: "all" }).map((r) => r.node.id), ["c", "b", "a"]);
   assert.deepEqual(L.themeRows(map, { status: "rejected" }).map((r) => r.node.id), ["c"]);
 });
+
+test("pageInfo keeps the page in range and describes the slice", () => {
+  const L = require("../../src/active_memory/ui/logic.js");
+  assert.deepEqual(L.pageInfo(0, 3, 10), { page: 0, pages: 1, from: 0, to: 0, total: 0, size: 10, start: 0, end: 0, hasPrev: false, hasNext: false });
+  const mid = L.pageInfo(45, 2, 20);
+  assert.deepEqual([mid.page, mid.pages, mid.from, mid.to, mid.start, mid.end, mid.hasPrev, mid.hasNext], [2, 3, 41, 45, 40, 45, true, false]);
+  assert.equal(L.pageInfo(45, 9, 20).page, 2); // a list that shrank clamps to the last page
+  assert.equal(L.pageInfo(45, -4, 20).page, 0);
+});

@@ -5,7 +5,8 @@
   const R = window.AMReview;
   const S = window.AMShell;
   const $ = (id) => document.getElementById(id);
-  const state = { events: [], cursor: null, more: false };
+  const state = { events: [], cursors: [null], page: 0, more: false };
+  const PAGE = 30;
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -21,15 +22,22 @@
     return node;
   }
 
-  async function load(older) {
-    const p = new URLSearchParams({ order: "desc", limit: "30", expand: "subject" });
-    if (older && state.cursor) p.set("cursor", state.cursor);
+  async function load() {
+    const p = new URLSearchParams({ order: "desc", limit: String(PAGE), expand: "subject" });
+    if (state.cursors[state.page]) p.set("cursor", state.cursors[state.page]);
     const days = parseInt($("period").value, 10);
     if (days) p.set("from", new Date(Date.now() - days * 86400000).toISOString());
     const page = await S.call("GET", "/v1/events?" + p);
-    state.events = older ? state.events.concat(page.events) : page.events;
-    state.cursor = page.next_cursor; state.more = page.has_more;
+    state.events = page.events; state.more = page.has_more;
+    if (page.next_cursor) state.cursors[state.page + 1] = page.next_cursor;
   }
+
+  function goToPage(n) {
+    state.page = n;
+    load().then(() => { render(); window.scrollTo(0, 0); }).catch((e) => S.say(e.message, true));
+  }
+
+  function restart() { state.cursors = [null]; state.page = 0; return load(); }
 
   function render() {
     const list = $("timeline");
@@ -53,14 +61,14 @@
           el("div", {}, "Vznik: " + row.occurred + " · zapsal: " + row.actor + (row.sources ? " · " + row.sources : "")),
           el("div", {}, "Pořadí " + event.sequence + " · " + event.event_id))));
     }
-    $("older").hidden = !state.more;
+    // The events API has no total, so the pager shows the page number and whether a next page exists.
+    S.pager($("timeline-pager"), { page: state.page, total: 0, size: PAGE, hasNext: state.more }, goToPage);
   }
 
   S.register("timeline", {
-    async load() { await load(false); },
+    async load() { await restart(); },
     show() { render(); },
-    clear() { state.events = []; state.cursor = null; state.more = false; render(); },
+    clear() { state.events = []; state.cursors = [null]; state.page = 0; state.more = false; render(); },
   });
-  $("period").addEventListener("change", () => load(false).then(render).catch((e) => S.say(e.message, true)));
-  $("older").addEventListener("click", () => load(true).then(render).catch((e) => S.say(e.message, true)));
+  $("period").addEventListener("change", () => restart().then(render).catch((e) => S.say(e.message, true)));
 })();

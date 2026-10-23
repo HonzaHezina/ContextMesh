@@ -163,3 +163,42 @@ def test_conversation_counts_match_the_review_queue_and_leave_out_placement_link
         params={"kind": "all", "exclude_relation": "ABOUT", "status": "candidate"},
     ).json()
     assert counted == queue["total"] == 2
+
+
+def test_conversations_search_filter_sort_and_overview_fields(client):
+    put(
+        client,
+        "1",
+        "garden",
+        "2026-10-05T10:00:00Z",
+        content="Plán zahrady na jaro.",
+        extraction=None,
+    )
+    put(client, "2", "old", "2026-01-01T10:00:00Z", content="Něco o spánku.", extraction=None)
+    client.post(  # same message text in another source system
+        "/v1/episodes", json=message("3", "other", source_system="mail", extraction={"items": []})
+    )
+    drain(client)
+
+    def ids(**params):
+        rows = client.get("/v1/conversations", params=params).json()
+        return [c["conversation_id"] for c in rows["conversations"]]
+
+    assert set(ids()) == {"garden", "old", "other"}
+    # "added" puts what was added last on top even though its messages are the oldest
+    assert ids(sort="added")[0] == "other" and ids(sort="added")[1] == "old"
+    assert ids(sort="activity")[-1] == "old"
+    assert (
+        ids(q="zahrad") == ["garden"] and ids(q="SPÁNKU") == ["old"] and ids(q="nic-takového") == []
+    )
+    assert ids(source="mail") == ["other"]
+    first = client.get("/v1/conversations", params={"sort": "added", "limit": 2}).json()
+    assert first["total"] == 3 and first["matching"] == 3 and first["has_more"]
+    assert set(first["sources"]) == {"demo", "mail"}
+    row = next(c for c in first["conversations"] if c["conversation_id"] == "old")
+    assert row["preview"] == "Něco o spánku." and row["added_at"] and "themes" in row
+    rest = client.get(
+        "/v1/conversations", params={"sort": "added", "limit": 2, "cursor": first["next_cursor"]}
+    ).json()
+    assert [c["conversation_id"] for c in rest["conversations"]] == ["garden"]
+    assert client.get("/v1/conversations", params={"sort": "bogus"}).status_code == 422

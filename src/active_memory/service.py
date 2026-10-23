@@ -5,6 +5,7 @@ import json
 import logging
 import re
 import time
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -1037,9 +1038,18 @@ class MemoryService:
         text = " ".join((first_text or "").split())
         return (text[:70].rstrip() + "…" if len(text) > 70 else text) or None
 
-    def conversations(self, cursor=None, limit=25):
-        """Live conversations, newest activity first; keyset cursor 'last_at|source|conversation'."""
+    def conversations(self, cursor=None, limit=25, q=None, source=None, sort="activity"):
+        """Live conversations with a readable title, themes and a preview.
+
+        ``sort``: ``activity`` = newest message time first, ``added`` = most recently added first
+        (a pasted old conversation then still lands on top). ``q`` matches title, id, themes and
+        message text (case-insensitive); ``source`` keeps one source system. Keyset cursor
+        'sort key|source|conversation'.
+        """
+        if sort not in ("activity", "added"):
+            raise ValueError("invalid sort")
         derived = self.derived_by_source()
+        added = self.journal.ingest_times()
         groups = {}
         for episode_id, payload in self.journal.live_episodes():
             key = (payload["source_system"], payload["conversation_id"])
@@ -1049,9 +1059,11 @@ class MemoryService:
                     "messages": 0,
                     "first_at": None,
                     "last_at": None,
+                    "added": 0.0,
                     "items": {},
                     "themes": {},
                     "first": None,
+                    "text": [],
                 },
             )
             if payload["role"] == "user" and (
@@ -1059,6 +1071,8 @@ class MemoryService:
             ):
                 group["first"] = (payload["occurred_at"], payload["content"])
             group["messages"] += 1
+            group["text"].append(payload["content"])
+            group["added"] = max(group["added"], added.get(episode_id, 0.0))
             stamp = payload["occurred_at"]
             group["first_at"] = min(filter(None, [group["first_at"], stamp]))
             group["last_at"] = max(filter(None, [group["last_at"], stamp]))
@@ -1066,36 +1080,56 @@ class MemoryService:
                 group["items"][(item["subject"]["kind"], item["subject"]["identifier"])] = item
                 if item["candidate_kind"] == "Theme" and item["status"] != "rejected":
                     group["themes"][item["title"]] = group["themes"].get(item["title"], 0) + 1
+        sources = sorted({source_system for source_system, _ in groups})
+        needle = (q or "").strip().casefold()
         rows = []
         for (source_system, conversation_id), group in groups.items():
+            if source and source_system != source:
+                continue
+            title = self.conversation_title(
+                group["themes"], group["first"][1] if group["first"] else None
+            )
+            ranked = [t for t, _ in sorted(group["themes"].items(), key=lambda t: (-t[1], t[0]))]
+            if needle:
+                hay = " ".join(
+                    [title or "", conversation_id, source_system, *ranked, *group["text"]]
+                )
+                if needle not in hay.casefold():
+                    continue
             counts = {"candidate": 0, "confirmed": 0, "rejected": 0}
             for item in group["items"].values():
                 counts[item["status"]] += 1
+            first_text = " ".join((group["first"][1] if group["first"] else "").split())
+            added_at = (
+                datetime.fromtimestamp(group["added"], timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z")
+                if group["added"]
+                else group["last_at"]
+            )
             rows.append(
                 {
                     "source_system": source_system,
                     "conversation_id": conversation_id,
-                    "title": self.conversation_title(
-                        group["themes"], group["first"][1] if group["first"] else None
-                    ),
+                    "title": title,
+                    "preview": first_text[:180] + ("…" if len(first_text) > 180 else ""),
+                    "themes": ranked[:4],
                     "messages": group["messages"],
                     "first_at": group["first_at"],
                     "last_at": group["last_at"],
+                    "added_at": added_at,
                     "derived": counts,
                 }
             )
-        rows.sort(
-            key=lambda r: (r["last_at"], r["source_system"], r["conversation_id"]), reverse=True
-        )
+        field = "added_at" if sort == "added" else "last_at"
+        rows.sort(key=lambda r: (r[field], r["source_system"], r["conversation_id"]), reverse=True)
         if cursor:
             try:
-                last_at, source_system, conversation_id = cursor.split("|", 2)
+                stamp, source_system, conversation_id = cursor.split("|", 2)
             except ValueError:
                 raise ValueError("invalid cursor") from None
-            after = (last_at, source_system, conversation_id)
-            rows = [
-                r for r in rows if (r["last_at"], r["source_system"], r["conversation_id"]) < after
-            ]
+            after = (stamp, source_system, conversation_id)
+            rows = [r for r in rows if (r[field], r["source_system"], r["conversation_id"]) < after]
         page = rows[:limit]
         more = len(rows) > limit
         last = page[-1] if page else None
@@ -1103,11 +1137,13 @@ class MemoryService:
             "conversations": page,
             "has_more": more,
             "next_cursor": (
-                f"{last['last_at']}|{last['source_system']}|{last['conversation_id']}"
+                f"{last[field]}|{last['source_system']}|{last['conversation_id']}"
                 if more and last
                 else None
             ),
             "total": len(groups),
+            "matching": len(rows) if not cursor else None,
+            "sources": sources,
         }
 
     def conversation(self, source_system, conversation_id):

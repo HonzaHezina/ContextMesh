@@ -45,9 +45,17 @@
     <p class="lead">Zprávy tak, jak byly dodány. Pod každou zprávou vidíte, co z ní vzniklo, a odtud se dostanete k návrhu nebo na mapu témat.</p>
     <div class="split conv-split">
       <div>
+        <div class="filters conv-tools">
+          <input id="conv-q" type="search" placeholder="Hledat v konverzacích…" aria-label="Hledat v konverzacích">
+          <select id="conv-source" aria-label="Zdroj"><option value="">všechny zdroje</option></select>
+          <select id="conv-sort" aria-label="Řazení">
+            <option value="added">naposledy přidané</option>
+            <option value="activity">podle data zpráv</option>
+          </select>
+        </div>
         <p id="conv-info" class="meta"></p>
         <ul id="conv-list" class="cards"></ul>
-        <button type="button" id="conv-more" hidden>Načíst další</button>
+        <nav id="conv-pager" class="pager" aria-label="Stránkování konverzací" hidden></nav>
       </div>
       <article id="conv-detail" aria-live="polite"></article>
     </div>
@@ -69,7 +77,7 @@
       <div>
         <div id="focus-bar" class="note" hidden></div>
         <ul id="queue" class="cards"></ul>
-        <button type="button" id="more" hidden>Načíst další</button>
+        <nav id="queue-pager" class="pager" aria-label="Stránkování fronty" hidden></nav>
       </div>
       <aside id="source-pane" aria-label="Zdroj"></aside>
     </div>
@@ -117,7 +125,7 @@
         <option value="30">Posledních 30 dní</option>
       </select></p>
     <ol id="timeline" class="timeline"></ol>
-    <button type="button" id="older" hidden>Starší události</button>
+    <nav id="timeline-pager" class="pager" aria-label="Stránkování časové osy" hidden></nav>
   </section>
 
   <section data-view="paste" aria-labelledby="paste-h" hidden>

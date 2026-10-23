@@ -8,7 +8,7 @@
   const state = {
     filter: { kind: "main", status: "candidate", rec: "" },
     advice: null, advicePoll: null, confirmRun: false,
-    items: [], total: 0, nextCursor: null, hasMore: false,
+    items: [], total: 0, cursors: [null], page: 0, hasMore: false,
     busy: new Set(), expanded: new Set(), focus: null,
   };
 
@@ -36,16 +36,27 @@
     return "/v1/candidates?" + p;
   }
 
-  async function load(params, append) {
+  const PAGE = 25;
+  const resetPaging = () => { state.cursors = [null]; state.page = 0; };
+
+  async function load(params) {
     const focus = params && params.focus;
     if (focus) {
       state.focus = await call("GET", "/v1/candidates/" + focus.kind + "/" + focus.id);
       return;
     }
     state.focus = null;
-    const page = await call("GET", queueQuery(append ? state.nextCursor : null));
-    state.items = append ? state.items.concat(page.items) : page.items;
-    state.total = page.total; state.hasMore = page.has_more; state.nextCursor = page.next_cursor;
+    const page = await call("GET", queueQuery(state.cursors[state.page] || null));
+    state.items = page.items;
+    state.total = page.total; state.hasMore = page.has_more;
+    if (page.next_cursor) state.cursors[state.page + 1] = page.next_cursor;
+    // The last item of a page was decided: the page is empty but earlier ones exist.
+    if (!state.items.length && state.page > 0) { state.page -= 1; await load(params); }
+  }
+
+  function goToPage(n) {
+    state.page = n;
+    load({}).then(() => { render(); window.scrollTo(0, 0); }).catch((e) => say(e.message, "error"));
   }
 
   async function refresh() {
@@ -133,7 +144,7 @@
     const bar = $("focus-bar");
     if (!S.connected) {
       $("queue-info").textContent = "Připojte se tokenem – bez něj se nic nezobrazí.";
-      $("more").hidden = true; bar.hidden = true; $("source-pane").replaceChildren();
+      $("queue-pager").hidden = true; bar.hidden = true; $("source-pane").replaceChildren();
       return;
     }
     if (state.focus) {
@@ -142,14 +153,14 @@
         el("button", { type: "button", class: "link", onclick: () => { state.focus = null; refresh().catch((e) => say(e.message, "error")); } }, "Zpět na celou frontu"));
       $("queue-info").textContent = "";
       list.append(itemCard(state.focus));
-      $("more").hidden = true;
+      $("queue-pager").hidden = true;
       return;
     }
     bar.hidden = true;
-    $("queue-info").textContent = "Zobrazeno " + state.items.length + " z " + state.total + ".";
+    $("queue-info").textContent = "Celkem " + state.total + " položek.";
     if (!state.items.length) list.append(el("li", { class: "empty" }, "Žádní kandidáti v tomto filtru."));
     for (const item of state.items) list.append(itemCard(item));
-    $("more").hidden = !state.hasMore;
+    S.pager($("queue-pager"), { page: state.page, total: state.total, size: PAGE, hasNext: state.hasMore }, goToPage);
   }
 
   async function openSource(evidence) {
@@ -253,14 +264,13 @@
     },
     clear() {
       state.advice = null; clearTimeout(state.advicePoll); state.confirmRun = false;
-      state.items = []; state.total = 0; state.hasMore = false; state.focus = null;
+      state.items = []; state.total = 0; state.hasMore = false; state.focus = null; resetPaging();
       state.expanded.clear(); state.busy.clear(); render();
     },
   });
 
-  $("reload").addEventListener("click", () => { state.focus = null; refresh().catch((e) => say(e.message, "error")); });
-  $("f-kind").addEventListener("change", (e) => { state.filter.kind = e.target.value; state.focus = null; refresh().catch((x) => say(x.message, "error")); });
-  $("f-rec").addEventListener("change", (e) => { state.filter.rec = e.target.value; state.focus = null; refresh().catch((x) => say(x.message, "error")); });
-  $("f-status").addEventListener("change", (e) => { state.filter.status = e.target.value; state.focus = null; refresh().catch((x) => say(x.message, "error")); });
-  $("more").addEventListener("click", () => load({}, true).then(render).catch((e) => say(e.message, "error")));
+  $("reload").addEventListener("click", () => { state.focus = null; resetPaging(); refresh().catch((e) => say(e.message, "error")); });
+  $("f-kind").addEventListener("change", (e) => { state.filter.kind = e.target.value; state.focus = null; resetPaging(); refresh().catch((x) => say(x.message, "error")); });
+  $("f-rec").addEventListener("change", (e) => { state.filter.rec = e.target.value; state.focus = null; resetPaging(); refresh().catch((x) => say(x.message, "error")); });
+  $("f-status").addEventListener("change", (e) => { state.filter.status = e.target.value; state.focus = null; resetPaging(); refresh().catch((x) => say(x.message, "error")); });
 })();

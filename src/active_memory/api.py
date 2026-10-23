@@ -311,10 +311,13 @@ def create_app(settings=None):
     def conversations(
         cursor: str | None = None,
         limit: int = URLQuery(default=25, ge=1, le=100),
+        q: str | None = URLQuery(default=None, max_length=200),
+        source: str | None = URLQuery(default=None, max_length=80),
+        sort: str = URLQuery(default="activity", pattern="^(activity|added)$"),
         client=Depends(read),
     ):
-        """Live conversations, newest first, with how many candidates each produced."""
-        return service.conversations(cursor, limit)
+        """Live conversations with title, themes and preview; filter by text/source, sort by activity or by when added."""
+        return service.conversations(cursor, limit, q, source, sort)
 
     @app.get("/v1/conversations/{source_system}/{conversation_id:path}")
     def conversation(source_system: str, conversation_id: str, client=Depends(read)):

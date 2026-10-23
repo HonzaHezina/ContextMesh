@@ -40,6 +40,35 @@
     return response.json();
   }
 
+  // Page navigation under a long list. `o`: {page (0-based), total, size, hasNext, random}. With `random`
+  // (the whole list is known) it also offers first/last page; cursor lists only go one page at a time.
+  // `go(page)` loads that page. Hidden when everything fits on one page.
+  function pager(host, o, go) {
+    host.replaceChildren();
+    const info = window.AMLogic.pageInfo(o.total, o.page, o.size);
+    const hasNext = o.hasNext !== undefined ? o.hasNext : info.hasNext;
+    host.hidden = info.pages <= 1 && !hasNext && info.page === 0;
+    if (host.hidden) return;
+    const button = (text, label, page, off) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = text; b.setAttribute("aria-label", label); b.disabled = off;
+      b.addEventListener("click", () => go(page));
+      return b;
+    };
+    const status = document.createElement("span");
+    status.className = "pager-status";
+    status.textContent = o.total
+      ? "Strana " + (info.page + 1) + " z " + info.pages + " · " + info.from + "–" + info.to + " z " + o.total
+      : "Strana " + (o.page + 1);
+    host.append(
+      ...(o.random ? [button("«", "První strana", 0, !info.hasPrev)] : []),
+      button("‹ Předchozí", "Předchozí strana", o.page - 1, o.page <= 0),
+      status,
+      button("Další ›", "Další strana", o.page + 1, !hasNext),
+      ...(o.random ? [button("»", "Poslední strana", info.pages - 1, !info.hasNext)] : []),
+    );
+  }
+
   function register(name, view) { views[name] = Object.assign({ dirty: true }, view); }
 
   function markDirty() { for (const view of Object.values(views)) view.dirty = true; }
@@ -128,7 +157,7 @@
   }
 
   window.AMShell = {
-    ApiError, register, show, call, say, refreshCount, markDirty,
+    ApiError, register, show, call, say, refreshCount, markDirty, pager,
     get canDecide() { return session.canDecide; },
     get connected() { return !!session.token; },
   };

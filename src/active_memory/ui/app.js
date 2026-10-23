@@ -11,6 +11,8 @@
     filter: { status: "active", kind: "all", text: "" },
     linkFilter: { status: "candidate", relation: "all" },
     selectedTheme: null,
+    themePage: 0,
+    proposalPage: 0,
     selectedNode: null,
     source: null,
   };
@@ -92,23 +94,32 @@
       el(
         "div",
         { class: "filters" },
-        select(statusOptions, state.filter.status, (v) => { state.filter.status = v; render(); }),
+        select(statusOptions, state.filter.status, (v) => { state.filter.status = v; state.themePage = 0; render(); }),
         el("input", {
           type: "search",
           placeholder: "Hledat v tématech",
           value: state.filter.text,
-          oninput: (e) => { state.filter.text = e.target.value; renderThemeList(list); },
+          oninput: (e) => { state.filter.text = e.target.value; state.themePage = 0; renderThemeList(list); },
         })
       )
     );
     const list = el("ul", { class: "cards" });
-    pane.append(list);
-    renderThemeList(list);
+    const nav = el("nav", { class: "pager", "aria-label": "Stránkování témat", hidden: "hidden" });
+    pane.append(list, nav);
+    renderThemeList(list, nav);
   }
 
-  function renderThemeList(list) {
+  const THEME_PAGE = 15;
+  const PROPOSAL_PAGE = 10;
+
+  function renderThemeList(list, nav) {
     clear(list);
-    const rows = L.themeRows(state.map, { status: state.filter.status, text: state.filter.text });
+    nav = nav || list.nextElementSibling;
+    const all = L.themeRows(state.map, { status: state.filter.status, text: state.filter.text });
+    const info = L.pageInfo(all.length, state.themePage, THEME_PAGE);
+    state.themePage = info.page;
+    const rows = all.slice(info.start, info.end);
+    if (nav) S.pager(nav, { page: info.page, total: all.length, size: THEME_PAGE, random: true }, (n) => { state.themePage = n; renderThemeList(list, nav); });
     if (!rows.length) list.append(el("li", { class: "empty" }, "Žádná témata neodpovídají filtru."));
     for (const { node, cluster } of rows) {
       const card = el(
@@ -269,8 +280,8 @@
       el(
         "div",
         { class: "filters" },
-        select([["candidate", "čekající"], ["confirmed", "potvrzené"], ["rejected", "odmítnuté"]], state.linkFilter.status, (v) => { state.linkFilter.status = v; render(); }),
-        select(relations, state.linkFilter.relation, (v) => { state.linkFilter.relation = v; render(); }),
+        select([["candidate", "čekající"], ["confirmed", "potvrzené"], ["rejected", "odmítnuté"]], state.linkFilter.status, (v) => { state.linkFilter.status = v; state.proposalPage = 0; render(); }),
+        select(relations, state.linkFilter.relation, (v) => { state.linkFilter.relation = v; state.proposalPage = 0; render(); }),
         el("button", { type: "button", onclick: proposeNow }, "Navrhnout nové vazby")
       ),
       el("p", { class: "note" }, "Návrhy vznikají z podobnosti napříč chaty. Rozhodnutí patří vám; odmítnutý návrh se nevrátí.")
@@ -278,10 +289,13 @@
     const cards = state.links
       .filter((l) => l.relation !== "ABOUT" && l.status === state.linkFilter.status && (state.linkFilter.relation === "all" || l.relation === state.linkFilter.relation))
       .map(L.proposalCard);
+    const info = L.pageInfo(cards.length, state.proposalPage, PROPOSAL_PAGE);
+    state.proposalPage = info.page;
+    const shown = cards.slice(info.start, info.end);
     if (!cards.length) detail.append(el("p", { class: "empty" }, state.linkFilter.status === "candidate"
       ? "Žádné čekající návrhy vazeb. Tlačítko „Navrhnout nové vazby“ hledá podobné myšlenky z různých konverzací; bez zapnutého modelu najde jen téměř shodné formulace."
       : "Žádné vazby v tomto stavu."));
-    for (const card of cards) {
+    for (const card of shown) {
       detail.append(
         el(
           "article",
@@ -294,6 +308,11 @@
           reviewButtons("link", { id: card.id, status: card.status })
         )
       );
+    }
+    if (cards.length > PROPOSAL_PAGE) {
+      const nav = el("nav", { class: "pager", "aria-label": "Stránkování návrhů vazeb" });
+      detail.append(nav);
+      S.pager(nav, { page: info.page, total: cards.length, size: PROPOSAL_PAGE, random: true }, (n) => { state.proposalPage = n; renderProposals(); window.scrollTo(0, 0); });
     }
   }
 

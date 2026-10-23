@@ -158,7 +158,18 @@
     };
   }
 
+  // Paging of a list: which slice is shown and what the pager says. `page` is 0-based and is kept inside
+  // the valid range, so a list that shrank (a deleted item, a new filter) never shows an empty page.
+  function pageInfo(total, page, size) {
+    const pages = Math.max(1, Math.ceil(total / size));
+    const current = Math.min(Math.max(0, page | 0), pages - 1);
+    const from = total ? current * size + 1 : 0;
+    const to = Math.min(total, (current + 1) * size);
+    return { page: current, pages, from, to, total, size, start: current * size, end: to, hasPrev: current > 0, hasNext: current < pages - 1 };
+  }
+
   const api = {
+    pageInfo,
     STATUS_LABEL,
     KIND_LABEL,
     RELATION_LABEL,

@@ -5,7 +5,9 @@
   const R = window.AMReview;
   const S = window.AMShell;
   const $ = (id) => document.getElementById(id);
-  const state = { list: [], total: 0, next: null, more: false, current: null, detail: null, highlight: null };
+  const state = { list: [], total: 0, matching: 0, cursors: [null], page: 0, more: false, sources: [], current: null, detail: null, highlight: null,
+    q: "", source: "", sort: "added" };
+  const PAGE = 20;
 
   function el(tag, attrs, ...children) {
     const node = document.createElement(tag);
@@ -24,12 +26,33 @@
   const name = (c) => c.title || c.conversation_id;
   const same = (a, b) => a && b && a.source_system === b.source_system && a.conversation_id === b.conversation_id;
 
-  async function loadList(append) {
-    const query = new URLSearchParams({ limit: "25" });
-    if (append && state.next) query.set("cursor", state.next);
-    const page = await S.call("GET", "/v1/conversations?" + query);
-    state.list = append ? state.list.concat(page.conversations) : page.conversations;
-    state.total = page.total; state.next = page.next_cursor; state.more = page.has_more;
+  // One page of the list. Search, source and sort are done by the server; `page` is the 0-based page
+  // and the cursor of each page is remembered, so going back is possible too.
+  async function loadList(page) {
+    state.page = page || 0;
+    if (!state.page) state.cursors = [null];
+    const query = new URLSearchParams({ limit: String(PAGE), sort: state.sort });
+    if (state.cursors[state.page]) query.set("cursor", state.cursors[state.page]);
+    if (state.q.trim()) query.set("q", state.q.trim());
+    if (state.source) query.set("source", state.source);
+    const result = await S.call("GET", "/v1/conversations?" + query);
+    state.list = result.conversations;
+    state.total = result.total; state.more = result.has_more; state.sources = result.sources || [];
+    if (result.matching !== null && result.matching !== undefined) state.matching = result.matching;
+    if (result.next_cursor) state.cursors[state.page + 1] = result.next_cursor;
+  }
+
+  function goToPage(n) {
+    loadList(n).then(() => { render(); const top = $("conv-list"); if (top.scrollIntoView) top.scrollIntoView({ block: "start" }); }).catch((e) => S.say(e.message, true));
+  }
+
+  function refreshList() { return loadList(0).then(render).catch((e) => S.say(e.message, true)); }
+
+  function fillSources() {
+    const select = $("conv-source");
+    const keep = state.source;
+    select.replaceChildren(el("option", { value: "" }, "všechny zdroje"), state.sources.map((s) => el("option", { value: s }, s)));
+    select.value = state.sources.includes(keep) ? keep : "";
   }
 
   async function openConversation(source_system, conversation_id, highlight) {
@@ -98,7 +121,7 @@
     try {
       const r = await S.call("DELETE", path(c));
       state.detail = null; state.current = null;
-      await loadList(false);
+      await loadList(0);
       S.markDirty();
       state.flash = "Smazáno zpráv: " + r.messages + ". Odvozené návrhy, které stály jen na nich, zmizely také. Zálohy se řídí postupem uchování.";
       render();
@@ -106,14 +129,6 @@
       state.flash = "Smazání se nepovedlo: " + error.message;
       render();
     }
-  }
-
-  function counts(derived) {
-    const parts = [];
-    if (derived.candidate) parts.push(derived.candidate + " čeká na rozhodnutí");
-    if (derived.confirmed) parts.push(derived.confirmed + " potvrzeno");
-    if (derived.rejected) parts.push(derived.rejected + " zamítnuto");
-    return parts.length ? parts.join(" · ") : "nic z ní nevzniklo";
   }
 
   function derivedChip(item) {
@@ -152,23 +167,32 @@
     list.replaceChildren();
     if (!S.connected) {
       $("conv-info").textContent = "Připojte se tokenem – bez něj se nic nezobrazí.";
-      $("conv-detail").replaceChildren(); $("conv-more").hidden = true;
+      $("conv-detail").replaceChildren(); $("conv-pager").hidden = true;
       return;
     }
-    $("conv-info").textContent = "Konverzací: " + state.total + ". Nejnovější nahoře.";
-    if (!state.list.length) list.append(el("li", { class: "empty" }, "Zatím žádné konverzace."));
+    fillSources();
+    const filtered = state.q.trim() || state.source;
+    $("conv-info").textContent = filtered
+      ? "Nalezeno " + state.matching + " z " + state.total + " konverzací."
+      : "Konverzací: " + state.total + (state.sort === "added" ? ". Naposledy přidané nahoře." : ". Nejnovější zprávy nahoře.");
+    if (!state.list.length) list.append(el("li", { class: "empty" }, filtered ? "Nic neodpovídá hledání." : "Zatím žádné konverzace."));
     for (const c of state.list) {
       list.append(el("li", { class: "card conv-card" + (same(c, state.current) ? " selected" : ""), tabindex: "0", role: "button",
         onclick: () => openConversation(c.source_system, c.conversation_id).catch((e) => S.say(e.message, true)),
         onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } } },
         el("h3", { class: "title" }, name(c)),
-        el("div", { class: "meta" }, c.source_system + " · zpráv: " + c.messages + " · " + R.when(c.first_at) + (c.messages > 1 ? " – " + R.when(c.last_at) : "")),
-        el("div", { class: "meta" }, counts(c.derived))));
+        c.preview && c.preview !== name(c) ? el("p", { class: "preview" }, c.preview) : null,
+        c.themes && c.themes.length ? el("ul", { class: "tags", "aria-label": "Témata" }, c.themes.map((t) => el("li", { class: "tag" }, t))) : null,
+        el("div", { class: "stats" },
+          el("span", {}, c.source_system + " · " + c.messages + " zpráv · " + R.when(c.first_at) + (c.messages > 1 && R.when(c.last_at) !== R.when(c.first_at) ? " – " + R.when(c.last_at) : "")),
+          c.derived.candidate ? el("span", { class: "stat-pill candidate" }, c.derived.candidate + " čeká") : null,
+          c.derived.confirmed ? el("span", { class: "stat-pill confirmed" }, c.derived.confirmed + " potvrzeno") : null,
+          !c.derived.candidate && !c.derived.confirmed && !c.derived.rejected ? el("span", { class: "stat-pill" }, "bez návrhů") : null)));
     }
-    $("conv-more").hidden = !state.more;
+    S.pager($("conv-pager"), { page: state.page, total: state.matching, size: PAGE, hasNext: state.more }, goToPage);
     const detail = $("conv-detail");
     if (!state.detail) {
-      detail.replaceChildren(state.flash ? el("div", { class: "note", role: "status" }, state.flash) : null, el("p", { class: "empty" }, "Vyberte konverzaci vlevo."));
+      detail.replaceChildren(...[state.flash ? el("div", { class: "note", role: "status" }, state.flash) : null, el("p", { class: "empty" }, "Vyberte konverzaci vlevo.")].filter(Boolean));
       return;
     }
     state.flash = null;
@@ -186,7 +210,7 @@
 
   S.register("conversations", {
     async load() {
-      await loadList(false);
+      await loadList(state.page);
       // An open conversation is reloaded too, so it does not show what has since changed or been deleted.
       if (state.current) {
         try { state.detail = await S.call("GET", path(state.current)); }
@@ -198,9 +222,12 @@
       else render();
     },
     clear() {
-      state.list = []; state.total = 0; state.next = null; state.more = false;
+      state.list = []; state.total = 0; state.matching = 0; state.cursors = [null]; state.page = 0; state.more = false;
       state.current = null; state.detail = null; state.highlight = null; render();
     },
   });
-  $("conv-more").addEventListener("click", () => loadList(true).then(render).catch((e) => S.say(e.message, true)));
+  let typing = null;
+  $("conv-q").addEventListener("input", (e) => { state.q = e.target.value; clearTimeout(typing); typing = setTimeout(refreshList, 300); });
+  $("conv-source").addEventListener("change", (e) => { state.source = e.target.value; refreshList(); });
+  $("conv-sort").addEventListener("change", (e) => { state.sort = e.target.value; refreshList(); });
 })();

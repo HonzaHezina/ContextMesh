@@ -387,6 +387,14 @@ class Journal:
             for ref in json.loads(row[0])["provenance"]
         )
 
+    def ingest_times(self):
+        """episode id -> when the source was first accepted (epoch seconds, from the audit log)."""
+        with self.db() as db:
+            rows = db.execute(
+                "SELECT target, MIN(time) FROM audit WHERE action='ingest' GROUP BY target"
+            ).fetchall()
+        return {target: stamp for target, stamp in rows}
+
     def ingest_client(self, episode_id):
         with self.db() as db:
             row = db.execute(
