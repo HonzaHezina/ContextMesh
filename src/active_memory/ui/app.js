@@ -8,7 +8,7 @@
     map: null,
     links: [],
     tab: "themes",
-    filter: { status: "all", kind: "all", text: "" },
+    filter: { status: "active", kind: "all", text: "" },
     linkFilter: { status: "candidate", relation: "all" },
     selectedTheme: null,
     selectedNode: null,
@@ -87,7 +87,7 @@
 
   function renderThemes() {
     const pane = clear(document.getElementById("pane-list"));
-    const statusOptions = [["all", "všechny stavy"], ["candidate", "kandidáti"], ["confirmed", "potvrzené"], ["rejected", "odmítnuté"]];
+    const statusOptions = [["active", "bez odmítnutých"], ["all", "všechny stavy"], ["candidate", "kandidáti"], ["confirmed", "potvrzené"], ["rejected", "odmítnuté"]];
     pane.append(
       el(
         "div",

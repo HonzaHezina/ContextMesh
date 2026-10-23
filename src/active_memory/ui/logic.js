@@ -27,7 +27,8 @@
   }
 
   function matchesFilter(node, filter) {
-    if (filter.status && filter.status !== "all" && node.status !== filter.status) return false;
+    if (filter.status === "active") { if (node.status === "rejected") return false; }
+    else if (filter.status && filter.status !== "all" && node.status !== filter.status) return false;
     if (filter.kind && filter.kind !== "all" && node.kind !== filter.kind) return false;
     if (filter.text) {
       const hay = (node.label + " " + node.summary).toLocaleLowerCase("cs");
@@ -36,7 +37,8 @@
     return true;
   }
 
-  // Themes first: most active at the top; ties broken by label so the order is stable.
+  // Themes that recur across more chats first (that is what the memory is for), then the most active;
+  // ties are broken by label so the order is stable.
   function themeRows(map, filter) {
     const clusterOf = new Map();
     for (const cluster of map.clusters || []) {
@@ -44,7 +46,7 @@
     }
     return map.nodes
       .filter((n) => n.kind === "Theme" && matchesFilter(n, filter || {}))
-      .sort((a, b) => (b.activity || 0) - (a.activity || 0) || a.label.localeCompare(b.label, "cs"))
+      .sort((a, b) => (b.conversation_count || 0) - (a.conversation_count || 0) || (b.activity || 0) - (a.activity || 0) || a.label.localeCompare(b.label, "cs"))
       .map((node) => ({ node, cluster: clusterOf.get(node.id) || null }));
   }
 

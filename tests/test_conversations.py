@@ -150,3 +150,16 @@ def test_map_carries_readable_conversation_titles(client):
     put(client, "1", "chat-a")
     titles = client.get("/v1/map").json()["conversation_titles"]
     assert titles == {"demo/chat-a": "Vlastnictví dat"}
+
+
+def test_conversation_counts_match_the_review_queue_and_leave_out_placement_links(client):
+    put(client, "1", "chat-a")  # one Goal under one theme: two nodes and one ABOUT link
+    detail = client.get("/v1/conversations/demo/chat-a").json()
+    kinds = sorted(i["candidate_kind"] for i in detail["messages"][0]["derived"])
+    assert kinds == ["Goal", "Theme"]  # the ABOUT link is placement, not a decision
+    counted = client.get("/v1/conversations").json()["conversations"][0]["derived"]["candidate"]
+    queue = client.get(
+        "/v1/candidates",
+        params={"kind": "all", "exclude_relation": "ABOUT", "status": "candidate"},
+    ).json()
+    assert counted == queue["total"] == 2

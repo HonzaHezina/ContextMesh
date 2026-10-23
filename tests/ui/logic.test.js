@@ -108,3 +108,12 @@ test("theme links (ABOUT) are not counted as proposals", () => {
   ]);
   assert.equal(s.openProposals, 1);
 });
+
+test("themes: themes recurring in more chats come first, rejected ones are hidden by the 'active' filter", () => {
+  const L = require("../../src/active_memory/ui/logic.js");
+  const theme = (id, label, status, chats, activity) => ({ id, kind: "Theme", label, summary: label, status, conversation_count: chats, activity, evidence: [] });
+  const map = { nodes: [theme("a", "Zahrada", "candidate", 1, 0.9), theme("b", "Automatizace", "candidate", 3, 0.1), theme("c", "Spánek", "rejected", 5, 1)], edges: [], clusters: [] };
+  assert.deepEqual(L.themeRows(map, { status: "active" }).map((r) => r.node.id), ["b", "a"]);
+  assert.deepEqual(L.themeRows(map, { status: "all" }).map((r) => r.node.id), ["c", "b", "a"]);
+  assert.deepEqual(L.themeRows(map, { status: "rejected" }).map((r) => r.node.id), ["c"]);
+});

@@ -1007,6 +1007,8 @@ class MemoryService:
             for record in records.values():
                 if item_kind == "node":
                     title, candidate_kind = record["label"], record["kind"]
+                elif record["relation"] == "ABOUT":
+                    continue  # placement under a theme is not a decision; the queue leaves it out too
                 else:
                     ends = (nodes.get(record["source_id"]), nodes.get(record["target_id"]))
                     title = " – ".join(n["label"] if n else "(uzel nedostupný)" for n in ends)
