@@ -231,3 +231,52 @@ def test_similarity_settings_require_explicit_model_authorization():
     with pytest.raises(ValueError, match="model_api_key"):
         Settings(_env_file=None, judge_enabled=True, allow_model_calls=True)
     assert Settings(_env_file=None).effective_threshold == 0.5
+
+
+def test_rate_limited_calls_are_retried_with_the_provider_delay(monkeypatch):
+    import httpx
+
+    from active_memory import providers
+
+    waited = []
+
+    async def fake_sleep(seconds):
+        waited.append(seconds)
+
+    monkeypatch.setattr(providers.asyncio, "sleep", fake_sleep)
+    answers = iter([429, 503, 200])
+
+    def handler(request):
+        status = next(answers)
+        headers = {"retry-after": "1"} if status == 429 else {}
+        return httpx.Response(status, headers=headers, json={"ok": status == 200})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await providers.post_with_retry(client, "https://example.test/x", json={})
+
+    response = asyncio.run(run())
+    assert response.status_code == 200 and waited == [1.0, 5.0]
+
+
+def test_rate_limit_that_never_clears_is_returned_after_the_last_try(monkeypatch):
+    import httpx
+
+    from active_memory import providers
+
+    async def no_wait(seconds):
+        return None
+
+    monkeypatch.setattr(providers.asyncio, "sleep", no_wait)
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(429)
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await providers.post_with_retry(client, "https://example.test/x")
+
+    assert asyncio.run(run()).status_code == 429
+    assert len(calls) == 1 + len(providers.RETRY_DELAYS)

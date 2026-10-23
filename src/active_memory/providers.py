@@ -7,6 +7,28 @@ import httpx
 
 from .models import Extraction, Recommendation, Verdict
 
+# Waits before another try when the provider says "too many requests" (429) or is briefly
+# overloaded (502/503/504). A Retry-After header, in seconds, wins; it is capped so a job never
+# hangs for minutes. Free tiers of Mistral and Gemini answer 429 after about one request a second.
+RETRY_DELAYS = (2.0, 5.0, 12.0)
+RETRY_AFTER_CAP = 30.0
+RETRY_STATUS = (429, 502, 503, 504)
+
+
+async def post_with_retry(client, url, **kwargs):
+    """POST that retries 429 and temporary 5xx answers a few times; any other answer is returned as is."""
+    response = await client.post(url, **kwargs)
+    for delay in RETRY_DELAYS:
+        if response.status_code not in RETRY_STATUS:
+            break
+        try:
+            delay = min(float(response.headers.get("retry-after", delay)), RETRY_AFTER_CAP)
+        except ValueError:
+            pass
+        await asyncio.sleep(max(delay, 0))
+        response = await client.post(url, **kwargs)
+    return response
+
 
 async def chat_json(settings, transport, model, messages, name, schema):
     """One chat call that must answer with JSON. Tries the provider's JSON-schema mode first and,
@@ -15,7 +37,8 @@ async def chat_json(settings, transport, model, messages, name, schema):
     url = settings.model_base_url.rstrip("/") + "/chat/completions"
     headers = {"Authorization": f"Bearer {settings.model_api_key}"}
     async with httpx.AsyncClient(timeout=settings.timeout_seconds, transport=transport) as client:
-        response = await client.post(
+        response = await post_with_retry(
+            client,
             url,
             headers=headers,
             json={
@@ -33,7 +56,8 @@ async def chat_json(settings, transport, model, messages, name, schema):
                 + json.dumps(schema, ensure_ascii=False)
             )
             fallback = [{**messages[0], "content": messages[0]["content"] + "\n\n" + note}]
-            response = await client.post(
+            response = await post_with_retry(
+                client,
                 url,
                 headers=headers,
                 json={
@@ -109,7 +133,8 @@ class OpenAIEmbeddings:
         async with httpx.AsyncClient(timeout=s.timeout_seconds) as client:
             for start in range(0, len(texts), 64):
                 batch = texts[start : start + 64]
-                response = await client.post(
+                response = await post_with_retry(
+                    client,
                     s.effective_embedding_base_url.rstrip("/") + "/embeddings",
                     headers={"Authorization": f"Bearer {s.effective_embedding_api_key}"},
                     json={"model": s.effective_embedding_model, "input": batch},

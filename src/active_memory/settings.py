@@ -16,7 +16,7 @@ HOST_DEFAULTS = {
 }
 
 # One-click provider choices shown in the UI. Model names come from the providers' documentation
-# (checked 2026-10-13); the quality of any of them on Czech data has NOT been measured here.
+# (checked 2026-10-13, OpenAI and the retry note 2026-10-23); the quality of any of them on Czech data has NOT been measured here.
 PRESETS = [
     {
         "id": "gemini",
@@ -40,17 +40,20 @@ PRESETS = [
         "embedding_dim": 1024,
         "note": "Extrakce: Mistral Small 4 (levný, podporuje strukturovaný výstup). Rady a posuzování vazeb: Mistral Medium 3.5 "
         "(dražší, silnější). Embeddingy: mistral-embed. Rozměr 1024 vychází z běžně uváděné hodnoty, "
-        "v načtené dokumentaci uveden nebyl.",
+        "v načtené dokumentaci uveden nebyl. Bezplatná úroveň má nízký limit požadavků: při HTTP 429 aplikace zkusí volání "
+        "znovu s odstupem (respektuje Retry-After), při trvalém 429 úlohu zopakuje později; pomůže pomalejší dávka nebo placená úroveň.",
     },
     {
         "id": "openai",
         "label": "OpenAI",
         "base_url": "https://api.openai.com/v1",
-        "model": "",
-        "advice_model": "",
+        "model": "gpt-6-luna",
+        "advice_model": "gpt-6.1-sol",
         "embedding_model": "text-embedding-3-small",
         "embedding_dim": 1536,
-        "note": "Názvy modelů zde nebyly proti aktuální dokumentaci ověřeny; zadejte ručně.",
+        "note": "Extrakce: GPT-6 Luna (nejlevnější, doporučená náhrada za gpt-4.1-mini, který OpenAI vypíná 2027-01-14). "
+        "Rady a posuzování vazeb: GPT-6.1 Sol (dražší, silnější). Embeddingy: text-embedding-3-small. "
+        "Podpora strukturovaného výstupu u těchto modelů v dokumentaci nepotvrzena; při odmítnutí se použije záložní JSON režim.",
     },
     {
         "id": "ollama",
@@ -83,7 +86,7 @@ class Settings(BaseSettings):
     graphiti_enabled: bool = False
     model_base_url: str = "https://api.openai.com/v1"
     model_api_key: str = ""
-    model_name: str = "gpt-4.1-mini"
+    model_name: str = "gpt-6-luna"
     # Embeddings default to the model provider (same address and key). Set these only to split them.
     embedding_base_url: str = ""
     embedding_api_key: str = ""
